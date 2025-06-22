@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أداة معالجة النصوص</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .btn {
+            @apply bg-sky-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-700 transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500;
+        }
+        .btn-secondary {
+            @apply bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500;
+        }
+        /* Accordion transition */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-sky-700">أداة معالجة النصوص</h1>
+            <p class="text-gray-600 mt-2">أدوات متكاملة لتقسيم، تنظيف، ونسخ النصوص بسهولة.</p>
+        </header>
+
+        <main class="bg-white p-6 rounded-xl shadow-lg">
+            <!-- Text Input Area -->
+            <div class="mb-6">
+                <label for="mainText" class="block text-lg font-bold mb-2 text-gray-700">أدخل النص هنا:</label>
+                <textarea id="mainText" rows="12" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow" placeholder="الصق النص الذي تريد معالجته..."></textarea>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <button id="cleanMarkdownBtn" class="btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block ml-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm1.5 5.5a.5.5 0 01.5-.5H14a.5.5 0 010 1H6a.5.5 0 01-.5-.5zm0 2a.5.5 0 01.5-.5h8a.5.5 0 010 1H6a.5.5 0 01-.5-.5zm0 2a.5.5 0 01.5-.5h4a.5.5 0 010 1H6a.5.5 0 01-.5-.5z" clip-rule="evenodd" /></svg>
+                    تنظيف من الماركداون
+                </button>
+                <button id="openNewWindowBtn" class="btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                    فتح في نافذة جديدة
+                </button>
+            </div>
+
+            <!-- Text Splitting Section -->
+            <div class="bg-sky-50 p-6 rounded-lg border border-sky-200">
+                <h2 class="text-xl font-bold mb-4 text-sky-800">تقسيم النص</h2>
+                <div class="flex flex-col sm:flex-row items-center gap-4">
+                    <label for="chunkSize" class="font-semibold">قسم النص كل</label>
+                    <input type="number" id="chunkSize" value="500" class="w-24 p-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-sky-500">
+                    <label for="chunkSize" class="font-semibold">حرف تقريبًا.</label>
+                    <button id="splitBtn" class="btn flex-grow sm:flex-grow-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.121 4.879A3 3 0 0116.243 3H18a2 2 0 012 2v2.757a3 3 0 01-.879 2.121L14.879 12l4.242 4.243a3 3 0 01.879 2.121V21a2 2 0 01-2 2h-1.757a3 3 0 01-2.121-.879L12 14.879l-4.243 4.242a3 3 0 01-2.121.879H3a2 2 0 01-2-2v-2.757a3 3 0 01.879-2.121L5.121 12 1.76 7.757a3 3 0 01-.879-2.121V3a2 2 0 012-2h1.757a3 3 0 012.121.879L12 9.121l2.121-4.242z" /></svg>
+                        نفّذ التقسيم
+                    </button>
+                </div>
+            </div>
+
+            <!-- Output Area -->
+            <div id="output" class="mt-8 space-y-2">
+                <!-- Accordion items will appear here -->
+            </div>
+        </main>
+        
+        <footer class="text-center text-gray-500 mt-8 text-sm">
+            <p>تم تطويره بواسطة Gemini</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // DOM Elements
+        const mainText = document.getElementById('mainText');
+        const cleanMarkdownBtn = document.getElementById('cleanMarkdownBtn');
+        const openNewWindowBtn = document.getElementById('openNewWindowBtn');
+        const chunkSizeInput = document.getElementById('chunkSize');
+        const splitBtn = document.getElementById('splitBtn');
+        const outputDiv = document.getElementById('output');
+
+        /**
+         * Cleans text from Markdown formatting.
+         * @param {string} text The input text with Markdown.
+         * @returns {string} The cleaned plain text.
+         */
+        function cleanMarkdown(text) {
+            let cleanedText = text;
+            cleanedText = cleanedText.replace(/^#{1,6}\s+/gm, '');
+            cleanedText = cleanedText.replace(/(\*\*|__)(.*?)\1/g, '$2');
+            cleanedText = cleanedText.replace(/(\*|_)(.*?)\1/g, '$2');
+            cleanedText = cleanedText.replace(/~~(.*?)~~/g, '$1');
+            cleanedText = cleanedText.replace(/^(---|\*\*\*|___)\s*$/gm, '');
+            cleanedText = cleanedText.replace(/^>\s?/gm, '');
+            cleanedText = cleanedText.replace(/^[\s]*([*+-]|\d+\.)\s+/gm, '');
+            cleanedText = cleanedText.replace(/```[\s\S]*?```/g, '');
+            cleanedText = cleanedText.replace(/`([^`]+)`/g, '$1');
+            cleanedText = cleanedText.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
+            return cleanedText.trim();
+        }
+
+        /**
+         * Splits text into chunks of a given size, without cutting words.
+         * @param {string} text The full text to split.
+         * @param {number} size The desired maximum size of each chunk.
+         * @returns {string[]} An array of text chunks.
+         */
+        function smartSplit(text, size) {
+            if (!text || size <= 0) return [];
+            const chunks = [];
+            let startIndex = 0;
+            while (startIndex < text.length) {
+                let endIndex = startIndex + size;
+                if (endIndex >= text.length) {
+                    chunks.push(text.substring(startIndex));
+                    break;
+                }
+                let breakPoint = text.lastIndexOf(' ', endIndex);
+                if (breakPoint <= startIndex) breakPoint = text.lastIndexOf('.', endIndex);
+                if (breakPoint <= startIndex) breakPoint = text.lastIndexOf('\n', endIndex);
+                if (breakPoint <= startIndex) {
+                    endIndex = startIndex + size;
+                } else {
+                    endIndex = breakPoint;
+                }
+                chunks.push(text.substring(startIndex, endIndex).trim());
+                startIndex = endIndex + 1;
+            }
+            return chunks.filter(chunk => chunk.length > 0);
+        }
+
+        /**
+         * Displays the split chunks in an accordion interface.
+         * @param {string[]} chunks The array of text chunks.
+         */
+        function displayChunks(chunks) {
+            outputDiv.innerHTML = ''; // Clear previous output
+            if (chunks.length === 0) {
+                 outputDiv.innerHTML = `<p class="text-center text-gray-500 p-4">لا توجد أجزاء لعرضها. حاول تغيير حجم التقسيم أو إضافة المزيد من النص.</p>`;
+                 return;
+            }
+            
+            const header = document.createElement('h3');
+            header.className = 'text-2xl font-bold mb-4 text-gray-800 border-b-2 pb-2';
+            header.textContent = `تم تقسيم النص إلى ${chunks.length} أجزاء:`;
+            outputDiv.appendChild(header);
+
+            chunks.forEach((chunk, index) => {
+                const isOdd = index % 2 !== 0;
+                
+                const accordionItem = document.createElement('div');
+                accordionItem.className = 'border rounded-lg overflow-hidden fade-in';
+                accordionItem.classList.add(isOdd ? 'border-gray-300' : 'border-sky-300');
+
+                // Accordion Header (Button)
+                const accordionHeader = document.createElement('button');
+                accordionHeader.className = 'w-full flex justify-between items-center p-4 text-right font-bold focus:outline-none';
+                
+                // FIXED: Add classes one by one instead of a single string with spaces
+                if (isOdd) {
+                    accordionHeader.classList.add('bg-gray-100', 'hover:bg-gray-200');
+                } else {
+                    accordionHeader.classList.add('bg-sky-100', 'hover:bg-sky-200');
+                }
+                
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = `الجزء ${index + 1}`;
+                titleSpan.className = 'text-lg ' + (isOdd ? 'text-gray-800' : 'text-sky-800');
+                
+                const icon = document.createElement('div');
+                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>`;
+
+                accordionHeader.appendChild(titleSpan);
+                accordionHeader.appendChild(icon);
+
+                // Accordion Content
+                const accordionContent = document.createElement('div');
+                accordionContent.className = 'accordion-content'; // Uses style for transition
+
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'p-4 border-t';
+                
+                // FIXED: Add classes one by one
+                if (isOdd) {
+                    contentWrapper.classList.add('border-gray-300', 'bg-white');
+                } else {
+                    contentWrapper.classList.add('border-sky-300', 'bg-sky-50');
+                }
+
+                const chunkContent = document.createElement('p');
+                chunkContent.className = 'text-gray-700 whitespace-pre-wrap mb-4';
+                chunkContent.textContent = chunk;
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'bg-green-500 text-white text-sm py-1 px-3 rounded-md hover:bg-green-600 transition-colors';
+                copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> نسخ`;
+                copyBtn.onclick = (e) => {
+                    e.stopPropagation(); // Prevent accordion from closing when clicking copy
+                    copyToClipboard(chunk, copyBtn);
+                };
+
+                contentWrapper.appendChild(chunkContent);
+                contentWrapper.appendChild(copyBtn);
+                accordionContent.appendChild(contentWrapper);
+                
+                accordionItem.appendChild(accordionHeader);
+                accordionItem.appendChild(accordionContent);
+                outputDiv.appendChild(accordionItem);
+
+                // Click event to toggle accordion
+                accordionHeader.addEventListener('click', () => {
+                    const isOpen = accordionContent.style.maxHeight !== '0px';
+                    
+                    accordionContent.style.maxHeight = isOpen ? '0px' : accordionContent.scrollHeight + 'px';
+                    icon.firstElementChild.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+                });
+            });
+        }
+        
+        /**
+         * Copies text to the clipboard and provides user feedback.
+         * @param {string} text The text to copy.
+         * @param {HTMLElement} button The button that was clicked.
+         */
+        function copyToClipboard(text, button) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                const originalText = button.innerHTML;
+                button.textContent = '✅ تم النسخ!';
+                button.classList.add('bg-blue-600');
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('bg-blue-600');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                alert('عذراً، لم يتمكن المتصفح من نسخ النص.');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // Event Listeners
+        cleanMarkdownBtn.addEventListener('click', () => {
+            mainText.value = cleanMarkdown(mainText.value);
+        });
+        
+        openNewWindowBtn.addEventListener('click', () => {
+            const textContent = mainText.value;
+            if (!textContent) {
+                alert('لا يوجد نص لفتحه في نافذة جديدة.');
+                return;
+            }
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(`<html><head><title>عرض النص</title><meta charset="UTF-8"><style>body { font-family: sans-serif; line-height: 1.6; font-size: 1.2em; padding: 40px; direction: rtl; } pre { white-space: pre-wrap; word-wrap: break-word; }</style></head><body><pre>${textContent}</pre></body></html>`);
+            newWindow.document.close();
+        });
+
+        splitBtn.addEventListener('click', () => {
+            const text = mainText.value;
+            const size = parseInt(chunkSizeInput.value, 10);
+            if (!text || isNaN(size) || size <= 0) {
+                alert('الرجاء إدخال نص وحجم تقسيم صالح.');
+                return;
+            }
+            const chunks = smartSplit(text, size);
+            displayChunks(chunks);
+        });
+
+    </script>
+</body>
+</html>
