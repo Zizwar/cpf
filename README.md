@@ -308,6 +308,10 @@ const response_style = cpf.predictResponseStyle(user_context);
 ```
 ---
 
+
+**منشئ CPF~** - أداة إنشاء النماذج المعرفية  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/builder.html)
+
 ## 🧪 التجارب التفاعلية المباشرة
 
 ### 🎯 المحاكيات الأساسية
@@ -320,9 +324,6 @@ const response_style = cpf.predictResponseStyle(user_context);
 
 **خط زمني للذاكرة** - تتبع تطور الذكريات  
 [🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/agate_memory_timeline.html)
-
-**منشئ CPF** - أداة إنشاء النماذج المعرفية  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/builder.html)
 
 **حقول الطاقة المعرفية** - توزيع وإدارة الطاقة المعرفية  
 [🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cognitive_energy_fields.html)
@@ -340,7 +341,7 @@ const response_style = cpf.predictResponseStyle(user_context);
 
 **إدمان القمار** - أنماط السلوك الإدماني  
 [🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cpf_gambling_addiction_demo.html)
-
+[🔗 التجربة المباشرة 2](https://zizwar.github.io/cpf/app/gambling_addiction_cpf_simulation.html)
 **شلل الاختيار** - صعوبة اتخاذ القرارات  
 [🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cpf-choice-paralysis-demo%20(1).html)
 
@@ -358,10 +359,7 @@ const response_style = cpf.predictResponseStyle(user_context);
 ### ⚽ محاكيات التطبيقات المتخصصة
 
 **مهارة كرة القدم** - تطوير المهارات الرياضية  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/football_skill_cpf.html)
-
-**محاكاة إدمان القمار** - نمذجة الإدمان السلوكي  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/gambling_addiction_cpf_simulation.html)
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/football_skill_cpf.html)  
 
 **الحلقات العودية** - أنماط التفكير المتكررة  
 [🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/recursive_loops_cpf.html)
@@ -371,13 +369,18 @@ const response_style = cpf.predictResponseStyle(user_context);
 
 **انهيار الثقة** - ديناميكيات الثقة في القرارات  
 [🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/trust_collapse_quantum.html)
+---
 
+## 🕴️ محاكيات NPCs الكائنات الغير قابلة للعب
+
+**إدراك الحارس** - إدراك الكائنات الغير قابلة للعب، الحارس الحكيم  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/npcs/npc_village_guard.html)
+
+*قرية الوعي** - تفاعل إدراك مجموعة الكائنات الغير قابلة للعب
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/[butterfly_perception_webppl%20(1).html](https://github.com/Zizwar/cpf/app/npcs/village-cons.html))
 ---
 
 ## ⚡ محاكيات WebPPL الاحتمالية المتقدمة
-
-**محاكي إدراك النمل** - نمذجة سلوك النمل المعرفي  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/ant_perception_simulator.html)
 
 **إدراك الفراشة** - إدراك الكائنات البسيطة  
 [🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/butterfly_perception_webppl%20(1).html)
@@ -417,7 +420,8 @@ const response_style = cpf.predictResponseStyle(user_context);
 
 **مطور النموذج:** Brahim Bidi  
 **شراكة إبداعية:** Idea Vibing (Claude & Gemini)  
-**المستودع:** [GitHub CPF](https://github.com/zizwar/cpf)
+التحيزات المحتملة: عاطفية من المبرمج لفرض خط سير المفاهيم, تحيزات الذكاء التدريبية، تحيزات اتفاقية واعية وغير واعية بينهم
 
----
-هذا بحث تعاوني - المساهمات المدروسة مرحب بها!
+**الصفحة الرئيسية:** [~Page CPF](https://zizwar.github.io/cpf/)
+**المستودع:** [~GitHub CPF](https://github.com/zizwar/cpf)
+
