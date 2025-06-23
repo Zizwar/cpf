@@ -19,99 +19,12 @@
 
 **النموذج الجديد (Vectorial):**
 - الفكرة أو المهارة هي "صيغة رياضية"
-- مثل شعار في Illustrator - يمكن عرضه على أي حجم بوضوح مثالي
+- مثل شعار في Svg - يمكن عرضه على أي حجم بوضوح مثالي
 - كلما كبر "الوعاء المعرفي"، ظهرت تفاصيل أكثر وأعمق
 
-### النتيجة الثورية:
+### النتيجة :
 **الضوضاء تتحول إلى زخرفة.** ما يبدو "تشويشاً" في دماغ صغير هو في الحقيقة أنماط معقدة وجميلة لم يتمكن النظام من معالجتها. في دماغ أكبر، نفس هذا "التشويش" يصبح إبداعاً وحدساً وفهماً عميقاً.
 
----
-
-## 🧪 التجارب التفاعلية المباشرة
-
-### 🎯 المحاكيات الأساسية
-
-**محاكي ذاكرة العقيق** - إعادة قراءة الماضي الاحتمالية  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/agate_memory.html)
-
-**محاكي ذاكرة العقيق المتقدم** - نظام الذاكرة المتطور  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/agate_memory_simulator.html)
-
-**خط زمني للذاكرة** - تتبع تطور الذكريات  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/agate_memory_timeline.html)
-
-**منشئ CPF** - أداة إنشاء النماذج المعرفية  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/builder.html)
-
-**حقول الطاقة المعرفية** - توزيع وإدارة الطاقة المعرفية  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cognitive_energy_fields.html)
-
-**مصور التداخل المعرفي** - تصور تفاعل العمليات المعرفية  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cognitive_interference_visualizer.html)
-
-**تحيز التأكيد** - أنماط التفكير المتحيز  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/confirmation_bias_cpf%20(1).html)
-
-**محاكي الأحلام** - تمثيل عمليات الحلم  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cpf_dream_simulator.html)
-
-### 🎰 محاكيات السلوك المعقد
-
-**إدمان القمار** - أنماط السلوك الإدماني  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cpf_gambling_addiction_demo.html)
-
-**شلل الاختيار** - صعوبة اتخاذ القرارات  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cpf-choice-paralysis-demo%20(1).html)
-
-**منشئ المفاهيم** - بناء المفاهيم المعرفية  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cpf-concept-builder.html)
-
-### 🦌 محاكيات الإدراك البيولوجي
-
-**إدراك الصرصور** - نمذجة سلوك بسيط  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cockroach_perception_demo.html)
-
-**إدراك الغزال** - نمذجة سلوك الغزال  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/gazelle_cognition_demo.html)
-
-### ⚽ محاكيات التطبيقات المتخصصة
-
-**مهارة كرة القدم** - تطوير المهارات الرياضية  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/football_skill_cpf.html)
-
-**محاكاة إدمان القمار** - نمذجة الإدمان السلوكي  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/gambling_addiction_cpf_simulation.html)
-
-**الحلقات العودية** - أنماط التفكير المتكررة  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/recursive_loops_cpf.html)
-
-**محاكي الحلقات العودية** - الأنماط العودية في التفكير  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/recursive_loops_simulator.html)
-
-**انهيار الثقة** - ديناميكيات الثقة في القرارات  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/trust_collapse_quantum.html)
-
----
-
-## ⚡ محاكيات WebPPL الاحتمالية المتقدمة
-
-**محاكي إدراك النمل** - نمذجة سلوك النمل المعرفي  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/ant_perception_simulator.html)
-
-**إدراك الفراشة** - إدراك الكائنات البسيطة  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/butterfly_perception_webppl%20(1).html)
-
-**التداخل الجماعي** - تفاعل العقل الجماعي  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/collective_interference_demo.html)
-
-**الإدراك البشري WebPPL** - محاكي الإدراك البشري الاحتمالي  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/human_cognition_webppl.html)
-
-**القرار البشري** - عملية اتخاذ القرار البشري  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/human_decision_webppl.html)
-
-**إعادة بناء الذاكرة البصرية** - إعادة بناء الذكريات البصرية  
-[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/memory_reconstruction_visual%20(1).html)
 
 ---
 
@@ -255,7 +168,6 @@ cpf.injectExternalInfluence({
 4. **DecisionQuantum** - اتخاذ القرارات كانهيار موجي
 5. **RealityEngine** - الأمان ومراقبة الذات
 
-#### **المحركات الجديدة:**
 1. **CognitiveRhythm** - الهزازات الثلاثة والإيقاع المعرفي
 2. **PerceptualCycle** - الدورة الإدراكية وموجات البناء
 3. **GrowthEngine** - النمو البيولوجي والمعرفي
@@ -316,7 +228,7 @@ const advanced_understanding = await child.accessConcept('dog');
 هذا ليس عيباً في الإدراك البشري - بل ميزة. البشر يكيفون استجاباتهم للسياق والمزاج والبيئة.
 
 ### **"الذاكرة إعادة بناء، ليس تخزين"**
-الاكتشاف الأهم: الذاكرة البشرية ليست مثل تخزين الكمبيوتر. في كل مرة تتذكر، تعيد بناء التجربة بناءً على من أنت الآن.
+  الذاكرة البشرية ليست مثل تخزين الكمبيوتر. في كل مرة تتذكر، تعيد بناء التجربة بناءً على من أنت الآن. 
 
 ### **"من الضوضاء إلى الزخرفة"**
 ما يبدو عشوائياً في نظام بسيط هو نمط معقد وجميل في نظام متطور.
@@ -372,9 +284,7 @@ setInterval(() => {
 ```
 
 ---
-
-## 🎓 استخدم هذا النموذج لفهم:
-
+للذكاء الاصطناعي 
 الآن لديك نموذج منظم لفهم لماذا يبدو البشر "غير متسقين". هم ليسوا كذلك - بل هم معالجات معلومات احتمالية فيكتورية متطورة.
 
 ### **استخدم هذا النموذج لـ:**
@@ -396,6 +306,93 @@ const user_context = {
 const response_style = cpf.predictResponseStyle(user_context);
 // تكييف أسلوب الرد بناءً على السياق العاطفي والمعرفي
 ```
+---
+
+## 🧪 التجارب التفاعلية المباشرة
+
+### 🎯 المحاكيات الأساسية
+
+**محاكي ذاكرة العقيق** - إعادة قراءة الماضي الاحتمالية  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/agate_memory.html)
+
+**محاكي ذاكرة العقيق المتقدم** - نظام الذاكرة المتطور  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/agate_memory_simulator.html)
+
+**خط زمني للذاكرة** - تتبع تطور الذكريات  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/agate_memory_timeline.html)
+
+**منشئ CPF** - أداة إنشاء النماذج المعرفية  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/builder.html)
+
+**حقول الطاقة المعرفية** - توزيع وإدارة الطاقة المعرفية  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cognitive_energy_fields.html)
+
+**مصور التداخل المعرفي** - تصور تفاعل العمليات المعرفية  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cognitive_interference_visualizer.html)
+
+**تحيز التأكيد** - أنماط التفكير المتحيز  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/confirmation_bias_cpf%20(1).html)
+
+**محاكي الأحلام** - تمثيل عمليات الحلم  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cpf_dream_simulator.html)
+
+### 🎰 محاكيات السلوك المعقد
+
+**إدمان القمار** - أنماط السلوك الإدماني  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cpf_gambling_addiction_demo.html)
+
+**شلل الاختيار** - صعوبة اتخاذ القرارات  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cpf-choice-paralysis-demo%20(1).html)
+
+**منشئ المفاهيم** - بناء المفاهيم المعرفية  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cpf-concept-builder.html)
+
+### 🦌 محاكيات الإدراك البيولوجي
+
+**إدراك الصرصور** - نمذجة سلوك بسيط  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/cockroach_perception_demo.html)
+
+**إدراك الغزال** - نمذجة سلوك الغزال  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/gazelle_cognition_demo.html)
+
+### ⚽ محاكيات التطبيقات المتخصصة
+
+**مهارة كرة القدم** - تطوير المهارات الرياضية  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/football_skill_cpf.html)
+
+**محاكاة إدمان القمار** - نمذجة الإدمان السلوكي  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/gambling_addiction_cpf_simulation.html)
+
+**الحلقات العودية** - أنماط التفكير المتكررة  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/recursive_loops_cpf.html)
+
+**محاكي الحلقات العودية** - الأنماط العودية في التفكير  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/recursive_loops_simulator.html)
+
+**انهيار الثقة** - ديناميكيات الثقة في القرارات  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/trust_collapse_quantum.html)
+
+---
+
+## ⚡ محاكيات WebPPL الاحتمالية المتقدمة
+
+**محاكي إدراك النمل** - نمذجة سلوك النمل المعرفي  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/ant_perception_simulator.html)
+
+**إدراك الفراشة** - إدراك الكائنات البسيطة  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/butterfly_perception_webppl%20(1).html)
+
+**التداخل الجماعي** - تفاعل العقل الجماعي  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/collective_interference_demo.html)
+
+**الإدراك البشري WebPPL** - محاكي الإدراك البشري الاحتمالي  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/human_cognition_webppl.html)
+
+**القرار البشري** - عملية اتخاذ القرار البشري  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/human_decision_webppl.html)
+
+**إعادة بناء الذاكرة البصرية** - إعادة بناء الذكريات البصرية  
+[🔗 التجربة المباشرة](https://zizwar.github.io/cpf/app/webppl/memory_reconstruction_visual%20(1).html)
 
 ---
 
@@ -416,18 +413,11 @@ const response_style = cpf.predictResponseStyle(user_context);
 
 ---
 
-## 🏆 الإنجاز
 
-وُلد من جلسات "العصف الفكري" بين الإبداع البشري والقوة التحليلية للذكاء الاصطناعي. استكشاف تعاوني لمعنى التفكير والشعور والتذكر.
-
-**"حيث يلتقي الإدراك البشري بالحوسبة الفيكتورية."** 🧠📐
-
----
 
 **مطور النموذج:** Brahim Bidi  
 **شراكة إبداعية:** Idea Vibing (Claude & Gemini)  
 **المستودع:** [GitHub CPF](https://github.com/zizwar/cpf)
 
 ---
-
-*هل تريد التعمق أكثر؟ تحقق من التجارب التفاعلية أعلاه واستكشف الوثائق الكاملة. هل تريد المساهمة؟ هذا بحث تعاوني - المساهمات المدروسة مرحب بها!*
+هذا بحث تعاوني - المساهمات المدروسة مرحب بها!
