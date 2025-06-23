@@ -140,7 +140,7 @@
         <button @click="toggleLanguage()" 
                 class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 hover:bg-white/20 transition-all">
             <span x-show="currentLang === 'ar'">🇺🇸 EN</span>
-            <span x-show="currentLang === 'en'">🇸🇦 AR</span>
+            <span x-show="currentLang === 'en'">🇲🇦 AR</span>
         </button>
     </div>
 
@@ -205,7 +205,7 @@
             </div>
 
             <!-- Concepts Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
+            <div style="display:none" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
                 <template x-for="(concept, index) in concepts" :key="concept.id">
                     <a :href="'core/' + concept.jsonFile" target="_blank"
                        class="concept-card bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30 hover:bg-white/30 transition-all duration-300 cursor-pointer block group fade-in"
