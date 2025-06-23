@@ -1,1 +1,481 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قرية الوعي - Village of Consciousness</title>
+    
+    <!-- مكتبات خفيفة وذكية -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    
+    <style>
+        body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .village-map { width: 800px; height: 600px; background: #e8f5e8; border-radius: 15px; position: relative; margin: 20px auto; }
+        .npc { position: absolute; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; transition: all 0.3s; }
+        .npc:hover { transform: scale(1.2); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .consciousness-panel { background: rgba(255,255,255,0.95); padding: 20px; border-radius: 10px; margin: 10px; }
+        .mood-indicator { height: 20px; border-radius: 10px; margin: 5px 0; transition: all 0.5s; }
+        .memory-bubble { background: #f0f8ff; padding: 8px; margin: 5px; border-radius: 15px; font-size: 12px; }
+        .thinking { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+    </style>
+</head>
+<body>
 
+<div x-data="villageOfConsciousness()" x-init="initVillage()">
+    
+    <!-- عنوان القرية -->
+    <div class="text-center p-6">
+        <h1 class="text-4xl font-bold text-white">🏘️ قرية الوعي</h1>
+        <p class="text-lg text-white opacity-90">أول قرية بـ NPCs واعية باستخدام CPF~ Vectorial</p>
+        <div class="text-sm text-white">⏰ الوقت في القرية: <span x-text="villageTime"></span></div>
+    </div>
+
+    <!-- خريطة القرية -->
+    <div class="village-map" id="villageMap">
+        <!-- NPCs -->
+        <template x-for="npc in npcs" :key="npc.id">
+            <div 
+                class="npc" 
+                :class="npc.thinking ? 'thinking' : ''"
+                :style="`left: ${npc.position.x}px; top: ${npc.position.y}px; background: ${npc.avatar.color}`"
+                @click="selectNPC(npc)"
+                :title="npc.name + ' - ' + npc.currentMood"
+            >
+                <div class="text-center text-2xl" x-text="npc.avatar.emoji"></div>
+                <!-- مؤشر الحالة النفسية -->
+                <div class="absolute -top-2 -right-2 w-4 h-4 rounded-full" 
+                     :class="getMoodColor(npc.consciousness.vectorial_state.consciousness_level)">
+                </div>
+            </div>
+        </template>
+
+        <!-- المباني -->
+        <div class="absolute top-10 left-10 text-6xl">🏠</div>
+        <div class="absolute top-10 right-10 text-6xl">🏪</div>
+        <div class="absolute bottom-10 left-50 text-6xl">⛲</div>
+        <div class="absolute bottom-10 right-10 text-6xl">🌳</div>
+    </div>
+
+    <!-- لوحة الوعي للـ NPC المختار -->
+    <div x-show="selectedNPC" class="consciousness-panel max-w-4xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- معلومات أساسية -->
+            <div>
+                <h3 class="text-xl font-bold mb-3">👤 <span x-text="selectedNPC?.name"></span></h3>
+                <div class="space-y-2">
+                    <div><strong>المهنة:</strong> <span x-text="selectedNPC?.profession"></span></div>
+                    <div><strong>العمر:</strong> <span x-text="selectedNPC?.age"></span></div>
+                    <div><strong>السعة المعرفية:</strong> <span x-text="selectedNPC?.consciousness.unified_space?.capacity"></span></div>
+                    <div><strong>مستوى الوعي:</strong> 
+                        <span x-text="(selectedNPC?.consciousness.vectorial_state?.consciousness_level * 100).toFixed(1)"></span>%
+                    </div>
+                </div>
+            </div>
+
+            <!-- الحالة العاطفية -->
+            <div>
+                <h3 class="text-xl font-bold mb-3">💭 الحالة النفسية</h3>
+                <template x-for="(value, emotion) in selectedNPC?.currentEmotions" :key="emotion">
+                    <div>
+                        <div class="flex justify-between">
+                            <span x-text="emotion"></span>
+                            <span x-text="(value * 100).toFixed(0) + '%'"></span>
+                        </div>
+                        <div class="mood-indicator" 
+                             :style="`width: ${value * 100}%; background: ${getEmotionColor(emotion)}`">
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- الذكريات الحديثة -->
+            <div>
+                <h3 class="text-xl font-bold mb-3">🧠 الذكريات الحديثة</h3>
+                <div class="max-h-40 overflow-y-auto">
+                    <template x-for="memory in selectedNPC?.recentMemories" :key="memory.id">
+                        <div class="memory-bubble">
+                            <div class="font-bold text-xs" x-text="memory.timestamp"></div>
+                            <div x-text="memory.content"></div>
+                            <div class="text-xs text-gray-600">
+                                التشفير العاطفي: <span x-text="memory.emotional_encryption"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- أدوات التدخل -->
+        <div class="mt-6 p-4 bg-gray-100 rounded-lg">
+            <h4 class="font-bold mb-3">🔬 أدوات التدخل العلاجي</h4>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <button @click="applyTherapy(selectedNPC)" 
+                        class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600">
+                    💊 علاج نفسي
+                </button>
+                <button @click="induceStress(selectedNPC)" 
+                        class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">
+                    ⚡ إجهاد
+                </button>
+                <button @click="boostCreativity(selectedNPC)" 
+                        class="bg-purple-500 text-white px-3 py-2 rounded hover:bg-purple-600">
+                    🎨 تحفيز إبداعي
+                </button>
+                <button @click="accelerateGrowth(selectedNPC)" 
+                        class="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600">
+                    🌱 تسريع النمو
+                </button>
+            </div>
+        </div>
+
+        <!-- محادثة مع NPC -->
+        <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h4 class="font-bold mb-3">💬 محادثة</h4>
+            <div class="flex gap-2">
+                <input x-model="chatMessage" 
+                       @keyup.enter="chatWithNPC(selectedNPC)" 
+                       placeholder="اكتب رسالة..." 
+                       class="flex-1 p-2 border rounded">
+                <button @click="chatWithNPC(selectedNPC)" 
+                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    إرسال
+                </button>
+            </div>
+            <div class="mt-3 max-h-32 overflow-y-auto">
+                <template x-for="chat in selectedNPC?.chatHistory" :key="chat.id">
+                    <div class="mb-2">
+                        <strong x-text="chat.speaker"></strong>: <span x-text="chat.message"></span>
+                        <div class="text-xs text-gray-500" x-text="chat.timestamp"></div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات القرية -->
+    <div class="consciousness-panel max-w-6xl mx-auto mt-6">
+        <h3 class="text-xl font-bold mb-4">📊 إحصائيات القرية</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="text-center">
+                <div class="text-2xl font-bold" x-text="calculateAverageHappiness().toFixed(1)"></div>
+                <div>متوسط السعادة</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold" x-text="countActiveNPCs()"></div>
+                <div>NPCs نشطة</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold" x-text="totalInteractions"></div>
+                <div>إجمالي التفاعلات</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold" x-text="formatTime(villageUptime)"></div>
+                <div>وقت تشغيل القرية</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- سجل الأحداث -->
+    <div class="consciousness-panel max-w-6xl mx-auto">
+        <h3 class="text-xl font-bold mb-3">📜 سجل أحداث القرية</h3>
+        <div class="max-h-40 overflow-y-auto">
+            <template x-for="event in villageEvents.slice(-10)" :key="event.id">
+                <div class="border-b py-2">
+                    <div class="font-bold text-sm" x-text="event.timestamp"></div>
+                    <div x-text="event.description"></div>
+                    <div class="text-xs text-gray-600" x-text="event.impact"></div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// إصدار مبسط من CPF~ للمتصفح
+class SimpleCPF {
+    constructor(config = {}) {
+        this.unified_space = { capacity: config.brain_capacity || 100000 };
+        this.vectorial_state = {
+            consciousness_level: 0.5,
+            is_conscious: true,
+            vectorial_precision: this.calculatePrecision(),
+            emotional_crypto_signatures: new Map(),
+            active_probably_ids: new Set()
+        };
+        this.emotional_crypto = new SimpleEmotionalCrypto();
+        this.current_emotions = config.initial_emotions || {};
+        this.memories = [];
+        this.growth_rate = 0.001;
+    }
+    
+    calculatePrecision() {
+        const capacity = this.unified_space.capacity;
+        if (capacity < 50000) return 3;
+        if (capacity < 200000) return 5;
+        if (capacity < 500000) return 8;
+        return 10;
+    }
+    
+    async process(input, context = {}) {
+        // محاكاة المعالجة الاحتمالية
+        const processing_complexity = Math.random() * 0.3 + 0.4;
+        
+        // تحديث مستوى الوعي بناءً على التعقيد
+        this.vectorial_state.consciousness_level = 
+            this.vectorial_state.consciousness_level * 0.9 + processing_complexity * 0.1;
+        
+        // تطبيق تأثير السياق العاطفي
+        if (context.emotional_impact) {
+            Object.keys(context.emotional_impact).forEach(emotion => {
+                this.current_emotions[emotion] = 
+                    (this.current_emotions[emotion] || 0) * 0.8 + 
+                    context.emotional_impact[emotion] * 0.2;
+            });
+        }
+        
+        return {
+            response: this.generateResponse(input, context),
+            emotional_state: { ...this.current_emotions },
+            consciousness_level: this.vectorial_state.consciousness_level,
+            processing_quality: processing_complexity
+        };
+    }
+    
+    generateResponse(input, context) {
+        // محاكاة توليد الاستجابة بناءً على الشخصية والمزاج
+        const responses = [
+            "هذا مثير للاهتمام...",
+            "أحتاج للتفكير في هذا.",
+            "هذا يذكرني بشيء حدث من قبل.",
+            "لست متأكداً من هذا.",
+            "هذا يجعلني أشعر بـ...",
+        ];
+        
+        return responses[Math.floor(Math.random() * responses.length)];
+    }
+    
+    injectExternalInfluence(influence) {
+        switch (influence.type) {
+            case 'therapeutic_noise':
+                this.current_emotions.anxiety = Math.max(0, (this.current_emotions.anxiety || 0) - influence.intensity * 0.3);
+                this.current_emotions.calmness = Math.min(1, (this.current_emotions.calmness || 0) + influence.intensity * 0.2);
+                break;
+            case 'stress':
+                this.current_emotions.stress = Math.min(1, (this.current_emotions.stress || 0) + influence.intensity * 0.4);
+                this.current_emotions.anxiety = Math.min(1, (this.current_emotions.anxiety || 0) + influence.intensity * 0.3);
+                break;
+            case 'creativity_boost':
+                this.current_emotions.curiosity = Math.min(1, (this.current_emotions.curiosity || 0) + influence.intensity * 0.3);
+                this.current_emotions.excitement = Math.min(1, (this.current_emotions.excitement || 0) + influence.intensity * 0.2);
+                break;
+            case 'growth_acceleration':
+                this.unified_space.capacity *= (1 + influence.intensity * 0.1);
+                this.vectorial_state.vectorial_precision = this.calculatePrecision();
+                break;
+        }
+    }
+    
+    storeMemory(content, emotional_context) {
+        const crypto_data = this.emotional_crypto.encrypt_emotion(emotional_context);
+        const memory = {
+            id: Date.now() + Math.random(),
+            content: content,
+            timestamp: new Date().toLocaleTimeString('ar'),
+            emotional_encryption: crypto_data.probably_id,
+            crypto_score: crypto_data.crypto_score
+        };
+        
+        this.memories.push(memory);
+        if (this.memories.length > 20) {
+            this.memories = this.memories.slice(-20);
+        }
+        
+        return memory;
+    }
+    
+    biologicalGrowthTick() {
+        // نمو بيولوجي تدريجي
+        const growth_factor = 1 + this.growth_rate * Math.random();
+        this.unified_space.capacity *= growth_factor;
+        this.vectorial_state.vectorial_precision = this.calculatePrecision();
+        
+        // تقليل شدة العواطف مع الوقت (استقرار طبيعي)
+        Object.keys(this.current_emotions).forEach(emotion => {
+            this.current_emotions[emotion] *= 0.99;
+        });
+    }
+}
+
+class SimpleEmotionalCrypto {
+    encrypt_emotion(emotional_experience) {
+        // تشفير بسيط للحالة العاطفية
+        let crypto_score = 0.5;
+        Object.entries(emotional_experience).forEach(([emotion, intensity]) => {
+            crypto_score += intensity * this.getEmotionMultiplier(emotion);
+        });
+        
+        crypto_score = crypto_score % 1; // تطبيع
+        
+        return {
+            crypto_score: crypto_score,
+            probably_id: `EMO_${crypto_score.toFixed(6).replace('.', '')}`,
+            emotional_signature: emotional_experience
+        };
+    }
+    
+    getEmotionMultiplier(emotion) {
+        const multipliers = {
+            joy: 0.123456,
+            sadness: 0.234567,
+            anger: 0.345678,
+            fear: 0.456789,
+            surprise: 0.567890,
+            disgust: 0.678901,
+            anxiety: 0.789012,
+            calmness: 0.890123,
+            excitement: 0.901234,
+            curiosity: 0.012345
+        };
+        return multipliers[emotion] || 0.111111;
+    }
+}
+
+function villageOfConsciousness() {
+    return {
+        // بيانات القرية
+        npcs: [],
+        selectedNPC: null,
+        villageTime: '',
+        villageUptime: 0,
+        totalInteractions: 0,
+        villageEvents: [],
+        chatMessage: '',
+        
+        // تهيئة القرية
+        async initVillage() {
+            this.createNPCs();
+            this.startVillageLife();
+            this.updateVillageTime();
+        },
+        
+        // إنشاء NPCs بشخصيات مختلفة
+        createNPCs() {
+            const npcTemplates = [
+                {
+                    name: 'أحمد الخباز',
+                    profession: 'خباز',
+                    age: 35,
+                    brain_capacity: 150000,
+                    position: { x: 100, y: 150 },
+                    avatar: { emoji: '👨‍🍳', color: '#8B4513' },
+                    initial_emotions: { contentment: 0.7, pride: 0.5, fatigue: 0.3 }
+                },
+                {
+                    name: 'فاطمة المعلمة',
+                    profession: 'معلمة',
+                    age: 28,
+                    brain_capacity: 200000,
+                    position: { x: 300, y: 200 },
+                    avatar: { emoji: '👩‍🏫', color: '#4A90E2' },
+                    initial_emotions: { curiosity: 0.8, patience: 0.6, enthusiasm: 0.7 }
+                },
+                {
+                    name: 'عمر الفنان',
+                    profession: 'رسام',
+                    age: 24,
+                    brain_capacity: 180000,
+                    position: { x: 500, y: 180 },
+                    avatar: { emoji: '👨‍🎨', color: '#9B59B6' },
+                    initial_emotions: { creativity: 0.9, sensitivity: 0.7, inspiration: 0.6 }
+                },
+                {
+                    name: 'نور الطبيبة',
+                    profession: 'طبيبة',
+                    age: 32,
+                    brain_capacity: 250000,
+                    position: { x: 200, y: 350 },
+                    avatar: { emoji: '👩‍⚕️', color: '#27AE60' },
+                    initial_emotions: { compassion: 0.8, focus: 0.7, responsibility: 0.9 }
+                },
+                {
+                    name: 'سالم الحكيم',
+                    profession: 'حكيم القرية',
+                    age: 65,
+                    brain_capacity: 300000,
+                    position: { x: 400, y: 400 },
+                    avatar: { emoji: '👴', color: '#F39C12' },
+                    initial_emotions: { wisdom: 0.9, serenity: 0.8, nostalgia: 0.6 }
+                }
+            ];
+            
+            this.npcs = npcTemplates.map(template => ({
+                id: Math.random().toString(36).substr(2, 9),
+                ...template,
+                consciousness: new SimpleCPF({
+                    brain_capacity: template.brain_capacity,
+                    initial_emotions: template.initial_emotions
+                }),
+                currentEmotions: { ...template.initial_emotions },
+                currentMood: 'محايد',
+                thinking: false,
+                recentMemories: [],
+                relationships: new Map(),
+                chatHistory: [],
+                lastInteraction: Date.now()
+            }));
+        },
+        
+        // بدء حياة القرية
+        startVillageLife() {
+            // تحديث مستمر كل ثانية
+            setInterval(() => {
+                this.villageUptime += 1000;
+                this.npcs.forEach(npc => {
+                    this.processNPCLife(npc);
+                });
+            }, 1000);
+            
+            // أحداث عشوائية كل 10-30 ثانية
+            setInterval(() => {
+                this.generateRandomEvent();
+            }, Math.random() * 20000 + 10000);
+            
+            // نمو بيولوجي كل 5 ثوان
+            setInterval(() => {
+                this.npcs.forEach(npc => {
+                    npc.consciousness.biologicalGrowthTick();
+                });
+            }, 5000);
+        },
+        
+        // معالجة حياة NPC الفردية
+        async processNPCLife(npc) {
+            // تحديث المزاج
+            npc.currentEmotions = { ...npc.consciousness.current_emotions };
+            npc.currentMood = this.determineMood(npc.currentEmotions);
+            
+            // إظهار التفكير أحياناً
+            if (Math.random() < 0.05) {
+                npc.thinking = true;
+                setTimeout(() => { npc.thinking = false; }, 2000);
+                
+                // إنشاء ذكرى عشوائية
+                const thoughts = [
+                    'أتذكر ذلك اليوم الجميل...',
+                    'يجب أن أقوم بعملي بشكل أفضل.',
+                    'أتساءل ماذا يحدث في القرية اليوم.',
+                    'الطقس جميل اليوم.',
+                    'أشعر بالامتنان للحياة.'
+                ];
+                
+                const memory = npc.consciousness.storeMemory(
+                    thoughts[Math.floor(Math.random() * thoughts.length)],
+                    npc.currentEmotions
+                );
+                
+                npc.recentMemori
