@@ -1,0 +1,159 @@
+{
+  "name": "cpf-emotional-oscillator-lab",
+  "version": "1.0.0",
+  "description": "مختبر الهزاز العاطفي - ربط الهزاز الديناميكي بالتشفير العاطفي في إطار CPF",
+  "main": "emotional_lab.js",
+  "scripts": {
+    "start": "node emotional_lab.js",
+    "advanced": "node advanced_transformers_lab.js",
+    "test-basic": "node -e \"const lab = require('./emotional_lab.js'); lab.runExperiments();\"",
+    "test-advanced": "node -e \"const {runAdvancedExperiment} = require('./advanced_transformers_lab.js'); runAdvancedExperiment();\"",
+    "install-transformers": "npm install @xenova/transformers",
+    "benchmark": "node benchmark.js"
+  },
+  "dependencies": {
+    "sentiment": "^5.0.2"
+  },
+  "optionalDependencies": {
+    "@xenova/transformers": "^2.6.0"
+  },
+  "devDependencies": {
+    "benchmark": "^2.1.4"
+  },
+  "keywords": [
+    "cpf",
+    "cognitive-framework",
+    "emotional-analysis", 
+    "oscillators",
+    "arabic-sentiment",
+    "transformers",
+    "ai",
+    "consciousness"
+  ],
+  "author": "Brahim BIDI",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zizwar/cpf"
+  },
+  "bugs": {
+    "url": "https://github.com/zizwar/cpf/issues"
+  },
+  "homepage": "https://github.com/zizwar/cpf#readme",
+  
+  "cpf_lab_config": {
+    "oscillator_settings": {
+      "existence_baseline": 0.5,
+      "damping_factor": 0.7,
+      "pattern_threshold": 0.001,
+      "precision_levels": [1, 3, 5, 8, 10, 15]
+    },
+    "spectrum_mapping": {
+      "void_absolute": 0.0,
+      "neutral_peace": 0.5,
+      "pain_absolute": 1.0,
+      "safe_range": [0.1, 0.9]
+    },
+    "encryption_settings": {
+      "base_precision": 8,
+      "mathematical_constants": {
+        "golden_ratio": 1.618033988749895,
+        "fibonacci_base": 0.112358132134,
+        "pi_fragments": 0.141592653589
+      }
+    },
+    "experiment_modes": {
+      "basic": "مختبر أساسي بدون Transformers",
+      "advanced": "مختبر متقدم مع Transformers",
+      "benchmark": "قياس الأداء والدقة",
+      "research": "وضع البحث العلمي"
+    }
+  },
+  
+  "installation_steps": [
+    "1. npm install",
+    "2. npm run test-basic  # للاختبار الأساسي", 
+    "3. npm run install-transformers  # للمكتبات المتقدمة",
+    "4. npm run test-advanced  # للاختبار المتقدم"
+  ],
+  
+  "quick_start_guide": {
+    "arabic": {
+      "title": "دليل البدء السريع",
+      "steps": [
+        "تثبيت المتطلبات: npm install",
+        "تشغيل التجربة الأساسية: npm start", 
+        "لتحليل متقدم: npm run advanced",
+        "لقياس الأداء: npm run benchmark"
+      ]
+    },
+    "english": {
+      "title": "Quick Start Guide", 
+      "steps": [
+        "Install dependencies: npm install",
+        "Run basic experiment: npm start",
+        "For advanced analysis: npm run advanced", 
+        "For benchmarking: npm run benchmark"
+      ]
+    }
+  },
+  
+  "research_applications": {
+    "cognitive_science": "دراسة الأنماط المعرفية في النصوص العربية",
+    "sentiment_analysis": "تحليل المشاعر متعدد المستويات", 
+    "mathematical_patterns": "اكتشاف الأنماط الرياضية في الإدراك",
+    "consciousness_simulation": "محاكاة الوعي من خلال الهزازات",
+    "emotional_encryption": "تشفير المشاعر الرقمي"
+  },
+  
+  "experimental_features": {
+    "real_time_analysis": "تحليل فوري للنصوص المُدخلة",
+    "pattern_prediction": "التنبؤ بالأنماط العاطفية",
+    "cross_cultural_analysis": "مقارنة بين اللغات المختلفة",
+    "temporal_evolution": "تتبع تطور الحالة العاطفية",
+    "resonance_detection": "اكتشاف الرنين بين الذكريات"
+  },
+  
+  "testing_scenarios": {
+    "basic_emotions": [
+      "سعادة غامرة",
+      "حزن عميق", 
+      "غضب شديد",
+      "خوف مرعب",
+      "هدوء تام"
+    ],
+    "complex_emotions": [
+      "حنين ممزوج بالأمل",
+      "فخر مشوب بالقلق",
+      "يأس مع بصيص نور",
+      "حب معقد بالألم",
+      "سكينة روحية عميقة"
+    ],
+    "philosophical_states": [
+      "التأمل في معنى الوجود",
+      "الشعور بالعدم المطلق", 
+      "إدراك اللانهاية",
+      "الوحدة الوجودية",
+      "السكينة الكونية"
+    ]
+  },
+  
+  "validation_metrics": {
+    "oscillator_accuracy": "دقة تمثيل الهزازات للحالات العاطفية",
+    "pattern_recognition": "قدرة النظام على اكتشاف الأنماط الرياضية",
+    "encryption_uniqueness": "تفرد التوقيعات العاطفية المُشفرة", 
+    "resonance_detection": "دقة اكتشاف الرنين بين التجارب",
+    "cross_language_consistency": "ثبات النتائج عبر اللغات"
+  },
+  
+  "future_enhancements": {
+    "multimodal_input": "دعم الصوت والصورة مع النص",
+    "real_time_biofeedback": "ربط مع البيانات الحيوية",
+    "ai_personality_modeling": "نمذجة شخصيات AI متنوعة",
+    "therapeutic_applications": "تطبيقات علاجية متخصصة",
+    "consciousness_metrics": "مقاييس الوعي الاصطناعي"
+  }
+}
