@@ -3,7 +3,7 @@
  */
 
 import { Hono } from 'hono'
-import { serveStatic } from 'hono/node-server/serve-static'
+import { serveStatic } from '@hono/node-server/serve-static'
 import OpenAI from 'openai'
 
 const app = new Hono()
