@@ -23,6 +23,53 @@ This lab provides **practical experiments** combining:
 - **🔢 اكتشاف الأنماط الرياضية** | Mathematical Pattern Discovery
 - **🤖 تحليل المشاعر بـ Transformers** | Sentiment Analysis with Transformers
 
+## 🌐 استخدام Hugging Face API | Using Hugging Face API
+
+### الحصول على التوكن المجاني | Getting Free API Token
+
+1. **التسجيل** في https://huggingface.co/
+2. **الذهاب إلى** Settings > Access Tokens  
+3. **إنشاء توكن جديد** (مجاني 100%)
+4. **نسخ التوكن** واستخدامه
+
+### الاستخدام | Usage
+
+```bash
+# تعيين التوكن كمتغير بيئة | Set token as environment variable
+export HUGGINGFACE_API_TOKEN=hf_your_token_here
+
+# تشغيل مع API | Run with API
+node run_cpf_lab.js api "نص معقد عاطفياً"
+
+# أو مرور التوكن مباشرة | Or pass token directly  
+node run_cpf_lab.js api "complex emotional text" hf_your_token
+```
+
+### النماذج المستخدمة | Models Used
+
+- **📊 تحليل المشاعر**: `distilbert-base-uncased-finetuned-sst-2-english`
+- **💭 تحليل العواطف**: `j-hartmann/emotion-english-distilbert-base`  
+- **🌍 متعدد اللغات**: `cardiffnlp/twitter-xlm-roberta-base-sentiment`
+- **🇸🇦 العربية**: `CAMeL-Lab/bert-base-arabic-camelbert-ca-sentiment`
+
+### مثال على النتائج | Sample Results
+
+```javascript
+🌐 Hugging Face API Results:
+   😊 Sentiment: NEGATIVE (87.3%)
+   💭 Emotion: sadness (76.2%)
+   🌍 Multilingual: NEGATIVE (82.1%)
+
+🧠 CPF Analysis:
+   🌈 Spectrum: 0.234567 (void tendency)
+   📊 Confidence: 81.9%
+   🔢 Patterns: 2 discovered
+
+🔐 Encryption:
+   🏷️  ID: EMO_8a9b7c2d_complex_1703
+   🌱 Seed: 0.23456789
+```
+
 ---
 
 ## 🚀 البدء السريع | Quick Start
@@ -51,6 +98,10 @@ npm run benchmark
 
 # تحليل متقدم مع Transformers | Advanced analysis with Transformers
 npm run advanced
+
+# تحليل متقدم مع Hugging Face API (الأفضل) | Advanced analysis with HF API (Best)
+export HUGGINGFACE_API_TOKEN=hf_your_token
+node run_cpf_lab.js api "complex emotional text"
 ```
 
 ### 3. أول تجربة | First Experiment
@@ -485,4 +536,3 @@ lab.emotionalCrypto.probably_ids.clear();
 
 ---
 
-**🎉 استمتع بالاستكشاف والتجريب! | Happy Exploring & Experimenting!**

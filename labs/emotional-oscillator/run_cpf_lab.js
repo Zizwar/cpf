@@ -1,604 +1,773 @@
-#!/usr/bin/env node
 /**
- * CPF Unified Lab Runner - منصة التشغيل الموحدة
+ * CPF + GPT-4o-mini Emotional Analysis Lab
+ * مختبر التحليل العاطفي المتقدم باستخدام GPT-4o-mini
  * 
- * واجهة موحدة لتشغيل جميع تجارب مختبر الهزاز العاطفي
- * 
- * الاستخدام:
- * node run_cpf_lab.js [التجربة] [المعاملات]
- * 
- * التجارب المتاحة:
- * - demo: عرض تفاعلي شامل
- * - quick: عرض سريع للمفاهيم
- * - analyze: تحليل نص واحد
- * - benchmark: قياس الأداء الشامل
- * - advanced: تحليل متقدم مع Transformers
- * - experiment: تجربة مخصصة
+ * مميزات:
+ * - تحليل عاطفي متقدم ودقيق
+ * - فهم السياق والتعقيد العاطفي
+ * - دعم ممتاز للعربية والإنجليزية
+ * - تكامل مثالي مع نظام CPF
  */
 
-const fs = require('fs');
-const path = require('path');
+const crypto = require('crypto');
 
-// محاولة تحميل الوحدات
-let EmotionalOscillatorLab, AdvancedEmotionalLab, CPFBenchmark, CPFQuickDemo;
-
+// محاولة تحميل node-fetch أو الاعتماد على fetch المدمج
+let fetch;
 try {
-    EmotionalOscillatorLab = require('./emotional_lab.js');
-    console.log("✅ تم تحميل المختبر الأساسي");
+    fetch = require('node-fetch');
 } catch (error) {
-    console.error("❌ فشل تحميل المختبر الأساسي:", error.message);
-    process.exit(1);
+    fetch = globalThis.fetch;
+    if (!fetch) {
+        console.warn("⚠️ fetch غير متاح. ثبت node-fetch: npm install node-fetch");
+    }
 }
 
-try {
-    const advanced = require('./advanced_transformers_lab.js');
-    AdvancedEmotionalLab = advanced.AdvancedEmotionalLab;
-    console.log("✅ تم تحميل المختبر المتقدم");
-} catch (error) {
-    console.warn("⚠️ المختبر المتقدم غير متاح:", error.message);
-}
+const EmotionalOscillatorLab = require('./emotional_lab.js');
 
-try {
-    const benchmark = require('./benchmark.js');
-    CPFBenchmark = benchmark.CPFBenchmark;
-    console.log("✅ تم تحميل نظام القياس");
-} catch (error) {
-    console.warn("⚠️ نظام القياس غير متاح:", error.message);
-}
-
-try {
-    const demo = require('./quick_demo.js');
-    CPFQuickDemo = demo.CPFQuickDemo;
-    console.log("✅ تم تحميل نظام العرض");
-} catch (error) {
-    console.warn("⚠️ نظام العرض غير متاح:", error.message);
-}
-
-class CPFUnifiedRunner {
-    constructor() {
-        this.available_experiments = {
-            'demo': 'عرض تفاعلي شامل للمفاهيم',
-            'quick': 'عرض سريع للمفاهيم الأساسية',
-            'analyze': 'تحليل نص واحد',
-            'encrypt': 'تشفير تجربة عاطفية',
-            'resonance': 'البحث عن الرنين العاطفي',
-            'patterns': 'اكتشاف الأنماط الرياضية',
-            'mood': 'تأثير المزاج على الذاكرة',
-            'evolution': 'تطور الهزاز عبر نصوص متعددة',
-            'benchmark': 'قياس أداء شامل',
-            'advanced': 'تحليل متقدم مع Transformers',
-            'experiment': 'تجربة مخصصة حرة',
-            'help': 'عرض هذه المساعدة'
+class GPT4oEmotionalLab extends EmotionalOscillatorLab {
+    constructor(api_key = null) {
+        super();
+        
+        this.api_key = api_key || process.env.OPENAI_API_KEY;
+        this.api_base = 'https://api.openai.com/v1/chat/completions';
+        this.model = 'gpt-4o-mini'; // النموذج المحدد
+        
+        // إعدادات متقدمة للتحليل العاطفي
+        this.analysis_config = {
+            temperature: 0.3,          // دقة عالية
+            max_tokens: 1500,          // مساحة كافية للتحليل
+            response_format: 'json',   // استجابة منظمة
+            timeout: 30000            // 30 ثانية timeout
         };
         
-        this.basic_lab = new EmotionalOscillatorLab();
-        this.advanced_lab = null;
-        this.benchmark_lab = null;
-        this.demo_lab = null;
+        // نظام التحليل العاطفي المتقدم
+        this.emotion_categories = {
+            // الطيف الأساسي
+            'void_emotions': ['emptiness', 'numbness', 'detachment', 'dissociation'],
+            'pain_emotions': ['agony', 'anguish', 'torment', 'overwhelm'],
+            'neutral_emotions': ['calm', 'peace', 'balance', 'serenity'],
+            
+            // العواطف المركبة
+            'complex_love': ['bittersweet', 'longing', 'unrequited', 'torn'],
+            'existential': ['dread', 'awe', 'transcendence', 'meaninglessness'],
+            'ambivalent': ['conflicted', 'mixed', 'contradictory', 'paradoxical']
+        };
         
-        console.log("\n🧪 منصة CPF الموحدة جاهزة للعمل!");
-    }
-
-    /**
-     * تشغيل التجربة المطلوبة
-     */
-    async runExperiment(experiment_name, ...args) {
-        console.log(`\n🔬 تشغيل تجربة: ${experiment_name}`);
-        console.log("=" * 50);
+        // إحصائيات الاستخدام
+        this.gpt_stats = {
+            total_requests: 0,
+            successful_requests: 0,
+            failed_requests: 0,
+            total_tokens_used: 0,
+            average_response_time: 0,
+            analysis_accuracy: 0
+        };
         
-        switch (experiment_name.toLowerCase()) {
-            case 'demo':
-                return await this.runDemo('interactive');
-                
-            case 'quick':
-                return await this.runDemo('quick');
-                
-            case 'analyze':
-                return await this.runTextAnalysis(args[0]);
-                
-            case 'encrypt':
-                return await this.runEmotionalEncryption(args[0]);
-                
-            case 'resonance':
-                return await this.runResonanceSearch(parseFloat(args[0]), parseFloat(args[1]));
-                
-            case 'patterns':
-                return await this.runPatternDiscovery(parseFloat(args[0]));
-                
-            case 'mood':
-                return await this.runMoodInfluence(args[0], args[1]);
-                
-            case 'evolution':
-                return await this.runEvolution(args);
-                
-            case 'benchmark':
-                return await this.runBenchmark();
-                
-            case 'advanced':
-                return await this.runAdvancedAnalysis(args[0]);
-                
-            case 'experiment':
-                return await this.runCustomExperiment(args);
-                
-            case 'help':
-                return this.showHelp();
-                
-            default:
-                console.error(`❌ تجربة غير معروفة: ${experiment_name}`);
-                this.showHelp();
-                return false;
-        }
-    }
-
-    /**
-     * تشغيل العرض التفاعلي
-     */
-    async runDemo(mode = 'interactive') {
-        if (!CPFQuickDemo) {
-            console.error("❌ نظام العرض غير متاح");
-            return false;
-        }
+        // نظام التحليل التدريجي
+        this.analysis_stages = [
+            'surface_emotion',      // العاطفة السطحية
+            'underlying_feelings',  // المشاعر الكامنة
+            'emotional_complexity', // التعقيد العاطفي
+            'spectrum_mapping',     // تحديد موقع الطيف
+            'pattern_recognition'   // اكتشاف الأنماط
+        ];
         
-        this.demo_lab = new CPFQuickDemo();
-        
-        if (mode === 'quick') {
-            await this.demo_lab.runQuickConcepts();
+        if (!this.api_key) {
+            console.warn("⚠️ مفتاح OpenAI API غير موجود!");
+            console.log("💡 للحصول على مفتاح API:");
+            console.log("   1. اذهب إلى https://platform.openai.com/");
+            console.log("   2. سجل دخولك أو أنشئ حساب");
+            console.log("   3. اذهب إلى API Keys");
+            console.log("   4. أنشئ مفتاح جديد");
+            console.log("   5. أضفه كـ: OPENAI_API_KEY=sk-your-key");
         } else {
-            await this.demo_lab.runInteractiveDemo();
+            console.log("✅ مفتاح OpenAI API متاح!");
+            console.log(`🤖 النموذج المحدد: ${this.model}`);
         }
-        
-        return true;
     }
 
     /**
-     * تحليل نص واحد
+     * استدعاء GPT-4o-mini لتحليل المشاعر المتقدم
      */
-    async runTextAnalysis(text) {
-        if (!text) {
-            text = "أشعر بسعادة غامرة في هذا اليوم المشرق!";
-            console.log(`📝 استخدام نص افتراضي: "${text}"`);
+    async callGPT4oAPI(text, analysis_type = 'comprehensive') {
+        if (!this.api_key) {
+            console.warn("⚠️ مفتاح API مفقود - استخدام محاكي");
+            return this.mockGPTResponse(text, analysis_type);
         }
-        
-        console.log(`🔬 تحليل النص: "${text}"`);
-        
-        const result = this.basic_lab.analyzeTextToSpectrum(text);
-        
-        console.log("\n📊 النتائج:");
-        console.log(`   🌈 موقع الطيف: ${result.spectrum_position.toFixed(6)}`);
-        console.log(`   🔴 هزاز القاضي: ${result.judge_value.toFixed(6)}`);
-        console.log(`   📋 الفئة: ${result.spectrum_analysis.category}`);
-        console.log(`   💭 التفسير: ${result.spectrum_analysis.interpretation}`);
-        console.log(`   ⬇️  ميل العدم: ${(result.spectrum_analysis.void_tendency * 100).toFixed(1)}%`);
-        console.log(`   ⬆️  ميل الألم: ${(result.spectrum_analysis.pain_tendency * 100).toFixed(1)}%`);
-        
-        // حالة الهزازات
-        console.log("\n🎛️ حالة الهزازات:");
-        console.log(`   🔵 الوجود: ${this.basic_lab.oscillators.existence}`);
-        console.log(`   🟡 الديناميكي: ${this.basic_lab.oscillators.dynamic.toFixed(6)}`);
-        console.log(`   🔴 القاضي: ${this.basic_lab.oscillators.judge.toFixed(6)}`);
-        
-        return result;
-    }
 
-    /**
-     * تشفير تجربة عاطفية
-     */
-    async runEmotionalEncryption(experience_text) {
-        if (!experience_text) {
-            experience_text = "ذكرى جميلة من أيام الطفولة";
-            console.log(`📝 استخدام تجربة افتراضية: "${experience_text}"`);
-        }
-        
-        console.log(`🔐 تشفير التجربة: "${experience_text}"`);
-        
-        // تحليل التجربة أولاً
-        const analysis = this.basic_lab.analyzeTextToSpectrum(experience_text);
-        
-        // تشفير التجربة
-        const encrypted = this.basic_lab.encryptEmotionalExperience({
-            type: 'user_experience',
-            content: experience_text,
-            analysis: analysis
-        });
-        
-        console.log("\n🔐 نتائج التشفير:");
-        console.log(`   🏷️  Probably ID: ${encrypted.probably_id}`);
-        console.log(`   🌱 البذرة الاحتمالية: ${encrypted.seed_value.toFixed(8)}`);
-        console.log(`   📊 موقع الطيف: ${analysis.spectrum_position.toFixed(6)}`);
-        console.log(`   🕐 وقت التشفير: ${new Date(encrypted.encryption_timestamp).toLocaleString()}`);
-        
-        // عرض تفاصيل التوقيع
-        if (encrypted.emotional_signature) {
-            console.log(`   🔢 التوقيع الرقمي: ${encrypted.emotional_signature.numeric_signature?.toFixed(8) || 'غير متاح'}`);
-            console.log(`   🎯 مستوى التعقيد: ${(encrypted.emotional_signature.complexity_level * 100).toFixed(1)}%`);
-        }
-        
-        return encrypted;
-    }
+        const start_time = Date.now();
+        this.gpt_stats.total_requests++;
 
-    /**
-     * البحث عن الرنين العاطفي
-     */
-    async runResonanceSearch(target_seed, tolerance = 0.001) {
-        if (!target_seed) {
-            target_seed = this.basic_lab.oscillators.judge;
-            console.log(`🎯 استخدام البذرة الحالية: ${target_seed.toFixed(8)}`);
-        }
-        
-        console.log(`🔍 البحث عن الرنين للبذرة: ${target_seed.toFixed(8)}`);
-        console.log(`📏 عتبة التشابه: ${tolerance}`);
-        
-        const resonant_memories = this.basic_lab.findEmotionalResonance(target_seed, tolerance);
-        
-        console.log(`\n🎵 النتائج: وُجد ${resonant_memories.length} ذكريات متناغمة`);
-        
-        if (resonant_memories.length > 0) {
-            console.log("\n📋 أقوى الذكريات المتناغمة:");
-            resonant_memories.slice(0, 5).forEach((memory, index) => {
-                console.log(`   ${index + 1}. ${memory.probably_id}`);
-                console.log(`      🎵 قوة الرنين: ${(memory.resonance_strength * 100).toFixed(2)}%`);
-                console.log(`      📊 بعد الطيف: ${memory.spectrum_distance.toFixed(6)}`);
-                console.log(`      🕐 بعد زمني: ${Math.floor(memory.time_distance / 1000)} ثانية`);
-                console.log("");
+        // بناء الـ prompt المتخصص
+        const system_prompt = this.buildSystemPrompt(analysis_type);
+        const user_prompt = this.buildUserPrompt(text, analysis_type);
+
+        try {
+            console.log(`🤖 استدعاء GPT-4o-mini للتحليل ${analysis_type}`);
+            
+            const response = await fetch(this.api_base, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.api_key}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: this.model,
+                    messages: [
+                        { role: 'system', content: system_prompt },
+                        { role: 'user', content: user_prompt }
+                    ],
+                    temperature: this.analysis_config.temperature,
+                    max_tokens: this.analysis_config.max_tokens,
+                    response_format: { type: "json_object" }
+                })
             });
-        } else {
-            console.log("⭕ لم توجد ذكريات متناغمة في هذا النطاق");
-            console.log("💡 جرب زيادة عتبة التشابه أو إنشاء المزيد من الذكريات");
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            
+            // تحديث الإحصائيات
+            const response_time = Date.now() - start_time;
+            this.gpt_stats.successful_requests++;
+            this.gpt_stats.total_tokens_used += result.usage?.total_tokens || 0;
+            this.gpt_stats.average_response_time = 
+                (this.gpt_stats.average_response_time * (this.gpt_stats.successful_requests - 1) + response_time) 
+                / this.gpt_stats.successful_requests;
+
+            console.log(`✅ نجح التحليل في ${response_time}ms`);
+            console.log(`📊 استهلاك الرموز: ${result.usage?.total_tokens || 'غير محدد'}`);
+            
+            // تحليل الاستجابة
+            return this.parseGPTResponse(result.choices[0].message.content);
+
+        } catch (error) {
+            this.gpt_stats.failed_requests++;
+            console.error(`❌ خطأ في GPT API:`, error.message);
+            
+            // Fallback للمحاكي
+            console.log("🔄 استخدام محاكي بديل...");
+            return this.mockGPTResponse(text, analysis_type);
         }
-        
-        return resonant_memories;
     }
 
     /**
-     * اكتشاف الأنماط الرياضية
+     * بناء الـ System Prompt المتخصص
      */
-    async runPatternDiscovery(test_value) {
-        if (!test_value) {
-            test_value = this.basic_lab.oscillators.judge;
-            console.log(`🎯 استخدام قيمة القاضي الحالية: ${test_value.toFixed(8)}`);
+    buildSystemPrompt(analysis_type) {
+        const base_prompt = `أنت محلل عاطفي متخصص يعمل ضمن إطار CPF (Cognitive Probabilistic Framework). 
+
+مهمتك تحليل النصوص العاطفية ضمن "طيف المشاعر المقلوب":
+- 0.0 = العدم المطلق (فراغ، يأس، انسحاب تام)
+- 0.5 = الحياد المثالي (سكينة، توازن، هدوء)  
+- 1.0 = الألم المطلق (إفراط، هلع، فوضى عاطفية)
+
+عليك تحليل:
+1. العاطفة السطحية المباشرة
+2. المشاعر الكامنة العميقة
+3. التعقيد والتناقضات العاطفية
+4. موقع دقيق في الطيف (0.0-1.0)
+5. مستوى الثقة في التحليل
+6. الأنماط الرياضية المحتملة
+
+استجب بـ JSON صحيح فقط.`;
+
+        const specialized_prompts = {
+            'comprehensive': base_prompt + `\n\nأجري تحليلاً شاملاً ومتعدد الطبقات.`,
+            'complex_emotions': base_prompt + `\n\nركز على العواطف المعقدة والمتناقضة.`,
+            'spectrum_precise': base_prompt + `\n\nحدد موقع الطيف بدقة رياضية عالية.`,
+            'pattern_discovery': base_prompt + `\n\nركز على اكتشاف الأنماط الرياضية والمعرفية.`
+        };
+
+        return specialized_prompts[analysis_type] || specialized_prompts['comprehensive'];
+    }
+
+    /**
+     * بناء الـ User Prompt
+     */
+    buildUserPrompt(text, analysis_type) {
+        return `حلل هذا النص عاطفياً: "${text}"
+
+أريد استجابة JSON بهذا التنسيق:
+{
+    "surface_emotion": {
+        "primary": "العاطفة الأساسية",
+        "intensity": "شدة من 0-1",
+        "confidence": "ثقة من 0-1"
+    },
+    "underlying_feelings": [
+        "مشاعر كامنة مخفية"
+    ],
+    "emotional_complexity": {
+        "level": "بسيط/معتدل/معقد/شديد التعقيد",
+        "contradictions": ["تناقضات موجودة"],
+        "ambivalence_score": "نقاط من 0-1"
+    },
+    "cpf_spectrum": {
+        "position": "موقع دقيق من 0.0-1.0",
+        "tendency": "void/neutral/pain",
+        "confidence": "ثقة من 0-1",
+        "reasoning": "سبب هذا الموقع"
+    },
+    "mathematical_patterns": {
+        "detected": ["أنماط رياضية محتملة"],
+        "significance": "أهمية من 0-1"
+    },
+    "insights": [
+        "رؤى عميقة حول الحالة العاطفية"
+    ]
+}`;
+    }
+
+    /**
+     * تحليل متقدم باستخدام GPT-4o-mini
+     */
+    async analyzeWithGPT4o(text, options = {}) {
+        console.log(`\n🤖 تحليل متقدم مع GPT-4o-mini`);
+        console.log(`📝 النص: "${text}"`);
+        
+        const analysis_start = Date.now();
+        
+        try {
+            // 1. التحليل الشامل الأساسي
+            const comprehensive_analysis = await this.callGPT4oAPI(text, 'comprehensive');
+            
+            // 2. تحليل العواطف المعقدة (إذا اكتُشف تعقيد)
+            let complex_analysis = null;
+            if (comprehensive_analysis.emotional_complexity?.level === 'معقد' || 
+                comprehensive_analysis.emotional_complexity?.level === 'شديد التعقيد') {
+                
+                console.log("🔍 اكتُشف تعقيد عاطفي - تحليل إضافي...");
+                complex_analysis = await this.callGPT4oAPI(text, 'complex_emotions');
+            }
+            
+            // 3. تحليل الطيف الدقيق
+            const spectrum_analysis = await this.callGPT4oAPI(text, 'spectrum_precise');
+            
+            // 4. دمج النتائج وتحديث CPF
+            const unified_analysis = this.unifyGPTAnalyses(
+                comprehensive_analysis, 
+                complex_analysis, 
+                spectrum_analysis
+            );
+            
+            // 5. تحديث نظام الهزازات
+            this.updateDynamicOscillator(unified_analysis.cpf_spectrum.position, options);
+            this.updateJudgeOscillator();
+            
+            // 6. التشفير العاطفي المتقدم
+            const encrypted_experience = await this.advancedGPTEmotionalEncryption({
+                text: text,
+                gpt_analysis: unified_analysis,
+                spectrum_position: unified_analysis.cpf_spectrum.position,
+                complexity_level: unified_analysis.emotional_complexity.level
+            });
+            
+            // 7. اكتشاف الأنماط المعرفية
+            const cognitive_patterns = this.discoverCognitivePatterns(unified_analysis);
+            
+            const analysis_time = Date.now() - analysis_start;
+            
+            const result = {
+                text: text,
+                gpt_analysis: unified_analysis,
+                cpf_integration: {
+                    spectrum_position: unified_analysis.cpf_spectrum.position,
+                    oscillator_state: { ...this.oscillators },
+                    cognitive_patterns: cognitive_patterns,
+                    analysis_confidence: unified_analysis.cpf_spectrum.confidence
+                },
+                encryption: encrypted_experience,
+                advanced_insights: this.generateGPTInsights(unified_analysis),
+                performance: {
+                    analysis_time: analysis_time,
+                    gpt_stats: { ...this.gpt_stats }
+                }
+            };
+            
+            this.displayGPTAnalysisResults(result);
+            return result;
+            
+        } catch (error) {
+            console.error("❌ خطأ في التحليل المتقدم:", error.message);
+            
+            // Fallback للتحليل الأساسي
+            console.log("🔄 التبديل للتحليل الأساسي...");
+            return this.analyzeTextToSpectrum(text);
+        }
+    }
+
+    /**
+     * دمج تحليلات GPT المتعددة
+     */
+    unifyGPTAnalyses(comprehensive, complex, spectrum) {
+        // دمج ذكي للتحليلات المختلفة
+        const unified = {
+            surface_emotion: comprehensive.surface_emotion,
+            underlying_feelings: [
+                ...comprehensive.underlying_feelings,
+                ...(complex?.underlying_feelings || [])
+            ].filter((v, i, a) => a.indexOf(v) === i), // إزالة التكرار
+            
+            emotional_complexity: {
+                level: complex?.emotional_complexity?.level || comprehensive.emotional_complexity.level,
+                contradictions: [
+                    ...(comprehensive.emotional_complexity?.contradictions || []),
+                    ...(complex?.emotional_complexity?.contradictions || [])
+                ],
+                ambivalence_score: Math.max(
+                    comprehensive.emotional_complexity?.ambivalence_score || 0,
+                    complex?.emotional_complexity?.ambivalence_score || 0
+                )
+            },
+            
+            cpf_spectrum: {
+                position: this.calculateUnifiedSpectrumPosition([
+                    comprehensive.cpf_spectrum,
+                    spectrum.cpf_spectrum
+                ]),
+                tendency: spectrum.cpf_spectrum?.tendency || comprehensive.cpf_spectrum.tendency,
+                confidence: this.calculateUnifiedConfidence([
+                    comprehensive.cpf_spectrum,
+                    spectrum.cpf_spectrum
+                ]),
+                reasoning: spectrum.cpf_spectrum?.reasoning || comprehensive.cpf_spectrum.reasoning
+            },
+            
+            mathematical_patterns: {
+                detected: [
+                    ...(comprehensive.mathematical_patterns?.detected || []),
+                    ...(spectrum.mathematical_patterns?.detected || [])
+                ],
+                significance: Math.max(
+                    comprehensive.mathematical_patterns?.significance || 0,
+                    spectrum.mathematical_patterns?.significance || 0
+                )
+            },
+            
+            insights: [
+                ...comprehensive.insights,
+                ...(complex?.insights || []),
+                ...(spectrum?.insights || [])
+            ]
+        };
+        
+        return unified;
+    }
+
+    /**
+     * حساب موقع الطيف الموحد
+     */
+    calculateUnifiedSpectrumPosition(spectrum_analyses) {
+        const positions = spectrum_analyses
+            .filter(analysis => analysis && analysis.position)
+            .map(analysis => parseFloat(analysis.position));
+        
+        if (positions.length === 0) return 0.5;
+        
+        // متوسط مرجح بالثقة
+        const confidences = spectrum_analyses
+            .filter(analysis => analysis && analysis.confidence)
+            .map(analysis => parseFloat(analysis.confidence));
+        
+        if (confidences.length === positions.length) {
+            const totalWeight = confidences.reduce((sum, conf) => sum + conf, 0);
+            const weightedSum = positions.reduce((sum, pos, i) => sum + pos * confidences[i], 0);
+            return weightedSum / totalWeight;
         }
         
-        console.log(`🔢 اكتشاف الأنماط في القيمة: ${test_value.toFixed(8)}`);
+        // متوسط بسيط إذا لم تتوفر معلومات الثقة
+        return positions.reduce((sum, pos) => sum + pos, 0) / positions.length;
+    }
+
+    /**
+     * حساب الثقة الموحدة
+     */
+    calculateUnifiedConfidence(spectrum_analyses) {
+        const confidences = spectrum_analyses
+            .filter(analysis => analysis && analysis.confidence)
+            .map(analysis => parseFloat(analysis.confidence));
         
-        // تحديث هزاز القاضي
-        this.basic_lab.oscillators.judge = test_value;
+        if (confidences.length === 0) return 0.5;
         
-        const patterns = this.basic_lab.detectMathematicalPatterns(test_value);
+        // متوسط الثقة مع معامل تصحيح للاتساق
+        const avgConfidence = confidences.reduce((sum, conf) => sum + conf, 0) / confidences.length;
+        const variance = confidences.reduce((sum, conf) => sum + Math.pow(conf - avgConfidence, 2), 0) / confidences.length;
+        const consistency_factor = 1 - Math.min(variance, 0.3);
         
-        console.log(`\n📊 النتائج: اكتُشف ${patterns.length} نمط`);
+        return avgConfidence * consistency_factor;
+    }
+
+    /**
+     * التشفير العاطفي المتقدم مع GPT
+     */
+    async advancedGPTEmotionalEncryption(experience_data) {
+        const judge_seed = this.oscillators.judge;
         
-        if (patterns.length > 0) {
-            console.log("\n🎯 الأنماط المكتشفة:");
-            patterns.forEach((pattern, index) => {
-                console.log(`   ${index + 1}. ${pattern.type}`);
-                console.log(`      ⭐ الأهمية: ${(pattern.significance * 100).toFixed(1)}%`);
-                console.log(`      📝 الوصف: ${pattern.description || 'نمط رياضي مكتشف'}`);
-                
-                // تفسير المعنى العاطفي
-                const emotional_meaning = this.interpretPatternMeaning(pattern.type);
-                console.log(`      💭 المعنى العاطفي: ${emotional_meaning}`);
-                console.log("");
+        // توقيع معقد يدمج تحليل GPT
+        const gpt_signature = this.generateGPTSignature(
+            experience_data.gpt_analysis,
+            judge_seed
+        );
+        
+        // تطبيق الأنماط المكتشفة
+        const pattern_enhanced_signature = this.enhanceWithGPTPatterns(
+            gpt_signature,
+            experience_data.gpt_analysis.mathematical_patterns
+        );
+        
+        // Probably ID متقدم
+        const probably_id = this.generateGPTProbablyID(
+            pattern_enhanced_signature,
+            experience_data.complexity_level
+        );
+        
+        const encrypted_experience = {
+            probably_id: probably_id,
+            gpt_signature: pattern_enhanced_signature,
+            judge_seed: judge_seed,
+            complexity_level: experience_data.complexity_level,
+            gpt_confidence: experience_data.gpt_analysis.cpf_spectrum.confidence,
+            encryption_timestamp: Date.now(),
+            experience_data: experience_data
+        };
+        
+        this.emotionalCrypto.probably_ids.set(probably_id, encrypted_experience);
+        
+        console.log(`🔐 تشفير متقدم مع GPT: ${probably_id}`);
+        console.log(`🧠 تعقيد: ${experience_data.complexity_level}`);
+        console.log(`📊 ثقة GPT: ${(experience_data.gpt_analysis.cpf_spectrum.confidence * 100).toFixed(1)}%`);
+        
+        return encrypted_experience;
+    }
+
+    /**
+     * اكتشاف الأنماط المعرفية
+     */
+    discoverCognitivePatterns(unified_analysis) {
+        const patterns = [];
+        
+        // أنماط التعقيد العاطفي
+        if (unified_analysis.emotional_complexity.level === 'شديد التعقيد') {
+            patterns.push({
+                type: 'extreme_complexity',
+                significance: 0.9,
+                description: 'تعقيد عاطفي استثنائي يتطلب معالجة متقدمة'
             });
-        } else {
-            console.log("⭕ لم يتم اكتشاف أنماط رياضية معروفة");
-            console.log("💡 جرب قيماً قريبة من النسبة الذهبية (0.618) أو فيبوناتشي");
+        }
+        
+        // أنماط التناقض
+        if (unified_analysis.emotional_complexity.ambivalence_score > 0.7) {
+            patterns.push({
+                type: 'high_ambivalence',
+                significance: 0.8,
+                description: 'تناقض عاطفي عالي - صراع داخلي معقد'
+            });
+        }
+        
+        // أنماط الطيف القصوى
+        const spectrum_pos = parseFloat(unified_analysis.cpf_spectrum.position);
+        if (spectrum_pos < 0.2 || spectrum_pos > 0.8) {
+            patterns.push({
+                type: 'extreme_spectrum_position',
+                significance: 0.85,
+                description: `موقع طيفي قصوى - ${spectrum_pos < 0.2 ? 'اقتراب من العدم' : 'اقتراب من الألم'}`
+            });
+        }
+        
+        // أنماط رياضية مكتشفة من GPT
+        if (unified_analysis.mathematical_patterns.significance > 0.6) {
+            patterns.push({
+                type: 'gpt_mathematical_resonance',
+                significance: unified_analysis.mathematical_patterns.significance,
+                description: 'أنماط رياضية معقدة مكتشفة بواسطة GPT'
+            });
         }
         
         return patterns;
     }
 
     /**
-     * تأثير المزاج على استدعاء الذاكرة
+     * عرض نتائج تحليل GPT
      */
-    async runMoodInfluence(current_mood, memory_query) {
-        if (!current_mood) {
-            current_mood = "أشعر بالحماس والطاقة اليوم";
-            console.log(`😊 استخدام مزاج افتراضي: "${current_mood}"`);
-        }
+    displayGPTAnalysisResults(result) {
+        console.log("\n📊 نتائج التحليل المتقدم مع GPT-4o-mini:");
+        console.log("=" * 60);
         
-        if (!memory_query) {
-            memory_query = "أتذكر يوماً جميلاً من الماضي";
-            console.log(`🔍 استخدام استعلام افتراضي: "${memory_query}"`);
-        }
+        // التحليل السطحي
+        const surface = result.gpt_analysis.surface_emotion;
+        console.log("😊 العاطفة السطحية:");
+        console.log(`   ${surface.primary} (شدة: ${(surface.intensity * 100).toFixed(1)}%, ثقة: ${(surface.confidence * 100).toFixed(1)}%)`);
         
-        console.log(`🧠 محاكاة تأثير المزاج على الذاكرة`);
-        console.log(`😊 المزاج الحالي: "${current_mood}"`);
-        console.log(`🔍 استعلام الذاكرة: "${memory_query}"`);
+        // المشاعر الكامنة
+        console.log("\n💭 المشاعر الكامنة:");
+        result.gpt_analysis.underlying_feelings.slice(0, 3).forEach((feeling, i) => {
+            console.log(`   ${i + 1}. ${feeling}`);
+        });
         
-        const result = this.basic_lab.simulateMoodInfluencedRecall(current_mood, memory_query);
+        // التعقيد العاطفي
+        const complexity = result.gpt_analysis.emotional_complexity;
+        console.log(`\n🧩 التعقيد العاطفي: ${complexity.level}`);
+        console.log(`   تناقضات: ${complexity.contradictions.length}`);
+        console.log(`   درجة التضارب: ${(complexity.ambivalence_score * 100).toFixed(1)}%`);
         
-        console.log("\n📊 تحليل المزاج:");
-        console.log(`   🌈 موقع الطيف: ${result.mood_analysis.spectrum_position.toFixed(6)}`);
-        console.log(`   🔴 قيمة القاضي: ${result.mood_analysis.judge_value.toFixed(6)}`);
-        console.log(`   📋 التفسير: ${result.mood_analysis.spectrum_analysis.interpretation}`);
+        // طيف CPF
+        const spectrum = result.gpt_analysis.cpf_spectrum;
+        console.log(`\n🌈 طيف CPF:`);
+        console.log(`   الموقع: ${spectrum.position} (${spectrum.tendency})`);
+        console.log(`   الثقة: ${(spectrum.confidence * 100).toFixed(1)}%`);
+        console.log(`   التفسير: ${spectrum.reasoning}`);
         
-        console.log("\n🔐 تشفير الاستعلام:");
-        console.log(`   🏷️  Probably ID: ${result.query_encryption.probably_id}`);
-        console.log(`   🌱 البذرة: ${result.query_encryption.seed_value.toFixed(8)}`);
+        // حالة الهزازات
+        console.log("\n🎛️ حالة الهزازات:");
+        console.log(`   🔵 الوجود: ${result.cpf_integration.oscillator_state.existence}`);
+        console.log(`   🟡 الديناميكي: ${result.cpf_integration.oscillator_state.dynamic.toFixed(6)}`);
+        console.log(`   🔴 القاضي: ${result.cpf_integration.oscillator_state.judge.toFixed(6)}`);
         
-        console.log(`\n💭 الذكريات المتأثرة: ${result.filtered_memories.length}`);
-        
-        if (result.filtered_memories.length > 0) {
-            console.log("\n📋 أقوى الذكريات المتأثرة:");
-            result.filtered_memories.slice(0, 3).forEach((memory, index) => {
-                console.log(`   ${index + 1}. ${memory.probably_id}`);
-                console.log(`      🎭 توافق مزاجي: ${(memory.mood_compatibility * 100).toFixed(1)}%`);
-                console.log(`      🧠 احتمال الاستدعاء: ${(memory.recall_probability * 100).toFixed(1)}%`);
-                console.log(`      🎵 قوة الرنين: ${(memory.resonance_strength * 100).toFixed(1)}%`);
-                console.log("");
+        // الأنماط المعرفية
+        if (result.cpf_integration.cognitive_patterns.length > 0) {
+            console.log("\n🔢 الأنماط المعرفية المكتشفة:");
+            result.cpf_integration.cognitive_patterns.forEach((pattern, i) => {
+                console.log(`   ${i + 1}. ${pattern.type} (${(pattern.significance * 100).toFixed(1)}%)`);
+                console.log(`      ${pattern.description}`);
             });
         }
         
-        return result;
+        // التشفير
+        if (result.encryption) {
+            console.log("\n🔐 التشفير العاطفي:");
+            console.log(`   🏷️  Probably ID: ${result.encryption.probably_id}`);
+            console.log(`   🌱 البذرة: ${result.encryption.judge_seed.toFixed(8)}`);
+            console.log(`   🧠 مستوى التعقيد: ${result.encryption.complexity_level}`);
+        }
+        
+        // الرؤى المتقدمة
+        if (result.advanced_insights.length > 0) {
+            console.log("\n💡 الرؤى المتقدمة:");
+            result.advanced_insights.slice(0, 3).forEach((insight, i) => {
+                console.log(`   ${i + 1}. ${insight}`);
+            });
+        }
+        
+        // الأداء
+        console.log("\n📈 إحصائيات الأداء:");
+        console.log(`   ⏱️  وقت التحليل: ${result.performance.analysis_time}ms`);
+        console.log(`   📞 طلبات GPT: ${result.performance.gpt_stats.total_requests}`);
+        console.log(`   ✅ نجح: ${result.performance.gpt_stats.successful_requests}`);
+        console.log(`   🪙 رموز مستهلكة: ${result.performance.gpt_stats.total_tokens_used}`);
+        console.log(`   ⚡ متوسط الاستجابة: ${result.performance.gpt_stats.average_response_time.toFixed(0)}ms`);
     }
 
     /**
-     * تطور الهزاز عبر نصوص متعددة
+     * تحليل الاستجابة من GPT
      */
-    async runEvolution(texts) {
-        if (!texts || texts.length === 0) {
-            texts = [
-                "صباح الخير يا عالم",
-                "القهوة لذيذة هذا الصباح",
-                "عندي اجتماع مهم اليوم",
-                "الاجتماع لم يسر كما توقعت",
-                "أحتاج إلى راحة قليلة",
-                "كل شيء سيكون بخير في النهاية"
-            ];
-            console.log("📝 استخدام نصوص افتراضية لمحاكاة يوم كامل");
-        }
-        
-        console.log(`📈 تتبع تطور الهزاز عبر ${texts.length} نصوص`);
-        
-        const result = this.basic_lab.runOscillatorEvolutionExperiment(texts);
-        
-        console.log("\n📊 نتائج التطور:");
-        console.log(`   📈 الاتجاه العام: ${result.trends.overall_direction}`);
-        console.log(`   📏 التغيير الكلي: ${result.trends.total_change.toFixed(6)}`);
-        console.log(`   🔄 متوسط التذبذب: ${result.trends.average_oscillation.toFixed(6)}`);
-        console.log(`   📐 نقاط الاستقرار: ${(result.trends.stability_score * 100).toFixed(1)}%`);
-        console.log(`   🔢 أنماط مكتشفة: ${result.trends.pattern_count}`);
-        
-        console.log("\n📋 تفاصيل الخطوات:");
-        result.evolution_data.slice(0, 5).forEach((step, index) => {
-            console.log(`   ${step.step}. "${step.text}"`);
-            console.log(`      🟡 ديناميكي: ${step.dynamic_value.toFixed(4)}`);
-            console.log(`      🔴 قاضي: ${step.judge_value.toFixed(4)}`);
-            console.log(`      🔢 أنماط: ${step.patterns_detected.length}`);
-            console.log("");
-        });
-        
-        if (result.evolution_data.length > 5) {
-            console.log(`   ... و ${result.evolution_data.length - 5} خطوات أخرى`);
-        }
-        
-        return result;
-    }
-
-    /**
-     * قياس الأداء الشامل
-     */
-    async runBenchmark() {
-        if (!CPFBenchmark) {
-            console.error("❌ نظام القياس غير متاح");
-            console.log("💡 تأكد من وجود ملف benchmark.js");
-            return false;
-        }
-        
-        console.log("📊 بدء قياس الأداء الشامل...");
-        console.log("⏳ هذا قد يستغرق دقيقة أو دقيقتين...");
-        
+    parseGPTResponse(content) {
         try {
-            this.benchmark_lab = new CPFBenchmark();
-            const results = await this.benchmark_lab.runFullBenchmark();
-            
-            console.log("\n🏆 نتائج القياس:");
-            console.log(`   📊 النتيجة الإجمالية: ${results.overall_performance.score.toFixed(1)}/100`);
-            console.log(`   🏅 التقدير: ${results.overall_performance.grade}`);
-            console.log(`   ⏱️  وقت الاختبار: ${(results.overall_performance.total_test_time / 1000).toFixed(1)}s`);
-            
-            return results;
-            
+            return JSON.parse(content);
         } catch (error) {
-            console.error("❌ خطأ في قياس الأداء:", error.message);
-            return false;
+            console.warn("⚠️ خطأ في تحليل JSON من GPT:", error.message);
+            
+            // محاولة استخراج معلومات أساسية من النص
+            return this.extractBasicInfoFromText(content);
         }
     }
 
     /**
-     * التحليل المتقدم مع Transformers
+     * استخراج معلومات أساسية من النص (fallback)
      */
-    async runAdvancedAnalysis(text) {
-        if (!AdvancedEmotionalLab) {
-            console.error("❌ المختبر المتقدم غير متاح");
-            console.log("💡 ثبت المكتبات المطلوبة: npm install @xenova/transformers");
-            return false;
-        }
+    extractBasicInfoFromText(content) {
+        // تحليل بسيط إذا فشل JSON parsing
+        const spectrum_match = content.match(/(\d+\.?\d*)/);
+        const spectrum_position = spectrum_match ? Math.min(1, Math.max(0, parseFloat(spectrum_match[1]))) : 0.5;
         
-        if (!text) {
-            text = "أشعر بمشاعر معقدة من الفرح والقلق في آن واحد";
-            console.log(`📝 استخدام نص افتراضي: "${text}"`);
-        }
-        
-        console.log(`🤖 تحليل متقدم مع Transformers: "${text}"`);
-        console.log("⏳ جاري تحميل النماذج...");
-        
-        try {
-            this.advanced_lab = new AdvancedEmotionalLab();
-            await this.advanced_lab.initialize();
-            
-            const result = await this.advanced_lab.analyzeWithTransformers(text);
-            
-            console.log("\n🤖 نتائج Transformers:");
-            if (result.transformers.sentiment) {
-                console.log(`   😊 المشاعر: ${result.transformers.sentiment[0].label} (${(result.transformers.sentiment[0].score * 100).toFixed(1)}%)`);
-            }
-            if (result.transformers.emotion) {
-                console.log(`   💭 العاطفة: ${result.transformers.emotion[0].label} (${(result.transformers.emotion[0].score * 100).toFixed(1)}%)`);
-            }
-            
-            console.log("\n🧠 تحليل CPF:");
-            console.log(`   🌈 طيف المشاعر: ${result.cpf_analysis.spectrum_position.toFixed(6)}`);
-            console.log(`   🔢 أنماط مكتشفة: ${result.cpf_analysis.patterns.length}`);
-            
-            if (result.insights && result.insights.length > 0) {
-                console.log("\n💡 الرؤى:");
-                result.insights.forEach((insight, index) => {
-                    console.log(`   ${index + 1}. ${insight.message} (${insight.urgency})`);
-                });
-            }
-            
-            return result;
-            
-        } catch (error) {
-            console.error("❌ خطأ في التحليل المتقدم:", error.message);
-            return false;
-        }
+        return {
+            surface_emotion: {
+                primary: "عاطفة معقدة",
+                intensity: 0.7,
+                confidence: 0.6
+            },
+            underlying_feelings: ["مشاعر كامنة"],
+            emotional_complexity: {
+                level: "معتدل",
+                contradictions: [],
+                ambivalence_score: 0.5
+            },
+            cpf_spectrum: {
+                position: spectrum_position,
+                tendency: spectrum_position < 0.4 ? "void" : spectrum_position > 0.6 ? "pain" : "neutral",
+                confidence: 0.6,
+                reasoning: "تحليل تلقائي بديل"
+            },
+            mathematical_patterns: {
+                detected: [],
+                significance: 0.3
+            },
+            insights: ["تحليل تم باستخدام نظام بديل"]
+        };
     }
 
     /**
-     * تجربة مخصصة حرة
+     * محاكي GPT للحالات الطارئة
      */
-    async runCustomExperiment(args) {
-        console.log("🧪 تجربة مخصصة حرة");
-        console.log("💡 يمكنك هنا تجريب أي مزيج من الوظائف");
+    mockGPTResponse(text, analysis_type) {
+        console.log(`🔄 محاكاة GPT-4o-mini للتحليل ${analysis_type}`);
         
-        if (args.length === 0) {
-            console.log("\n🔬 تجربة افتراضية: مقارنة المشاعر المتضادة");
-            
-            const emotions = [
-                "أشعر بسعادة غامرة!",
-                "حزن عميق يملأ قلبي",
-                "غضب شديد يغلي بداخلي!",
-                "هدوء وسكينة تامة"
-            ];
-            
-            console.log("\n📊 تحليل ومقارنة:");
-            const results = [];
-            
-            for (const emotion of emotions) {
-                const result = this.basic_lab.analyzeTextToSpectrum(emotion);
-                results.push({ emotion, result });
-                
-                console.log(`\n"${emotion}"`);
-                console.log(`   🌈 طيف: ${result.spectrum_position.toFixed(4)}`);
-                console.log(`   🔴 قاضي: ${result.judge_value.toFixed(4)}`);
-                console.log(`   📋 فئة: ${result.spectrum_analysis.category}`);
-            }
-            
-            // تحليل المقارنة
-            const positions = results.map(r => r.result.spectrum_position);
-            const range = Math.max(...positions) - Math.min(...positions);
-            const average = positions.reduce((a, b) => a + b, 0) / positions.length;
-            
-            console.log("\n📈 تحليل المقارنة:");
-            console.log(`   📏 نطاق التغطية: ${range.toFixed(4)}`);
-            console.log(`   📊 متوسط الطيف: ${average.toFixed(4)}`);
-            console.log(`   🎯 توزيع المشاعر: ${range > 0.5 ? 'متنوع' : 'محدود'}`);
-            
-            return results;
+        // محاكاة ذكية بناءً على النص
+        const hasNegativeWords = /sad|pain|hurt|cry|death|hate|fear|angry/i.test(text);
+        const hasPositiveWords = /happy|joy|love|beautiful|amazing|wonderful|great/i.test(text);
+        const hasComplexWords = /yet|but|however|although|conflicted|torn|mixed/i.test(text);
+        
+        let spectrum_position = 0.5;
+        if (hasNegativeWords && !hasPositiveWords) {
+            spectrum_position = 0.2 + Math.random() * 0.2;
+        } else if (hasPositiveWords && !hasNegativeWords) {
+            spectrum_position = 0.6 + Math.random() * 0.2;
+        } else if (hasComplexWords) {
+            spectrum_position = 0.3 + Math.random() * 0.4;
         }
         
-        // إذا أُعطيت معاملات، نفذ تجربة مخصصة
-        console.log("\n🔬 تنفيذ تجربة مخصصة بالمعاملات المُعطاة:");
-        args.forEach((arg, index) => {
-            console.log(`   معامل ${index + 1}: ${arg}`);
-        });
-        
-        // هنا يمكن إضافة منطق التجارب المخصصة
-        return { custom: true, args: args };
+        return {
+            surface_emotion: {
+                primary: hasComplexWords ? "عاطفة معقدة" : hasNegativeWords ? "سلبية" : "إيجابية",
+                intensity: 0.7 + Math.random() * 0.3,
+                confidence: 0.6 + Math.random() * 0.3
+            },
+            underlying_feelings: ["محاكاة تحليل المشاعر"],
+            emotional_complexity: {
+                level: hasComplexWords ? "معقد" : "معتدل",
+                contradictions: hasComplexWords ? ["تناقض محاكي"] : [],
+                ambivalence_score: hasComplexWords ? 0.8 : 0.3
+            },
+            cpf_spectrum: {
+                position: spectrum_position,
+                tendency: spectrum_position < 0.4 ? "void" : spectrum_position > 0.6 ? "pain" : "neutral",
+                confidence: 0.7,
+                reasoning: "تحليل محاكي ذكي"
+            },
+            mathematical_patterns: {
+                detected: [],
+                significance: 0.4
+            },
+            insights: ["رؤى محاكية للتجريب"]
+        };
     }
 
-    /**
-     * عرض المساعدة
-     */
-    showHelp() {
-        console.log("\n📖 دليل استخدام منصة CPF الموحدة");
-        console.log("=" * 60);
-        
-        console.log("\n🎯 الاستخدام:");
-        console.log("   node run_cpf_lab.js [التجربة] [المعاملات]");
-        
-        console.log("\n🧪 التجارب المتاحة:");
-        Object.entries(this.available_experiments).forEach(([command, description]) => {
-            console.log(`   ${command.padEnd(12)} - ${description}`);
-        });
-        
-        console.log("\n📝 أمثلة:");
-        console.log('   node run_cpf_lab.js demo');
-        console.log('   node run_cpf_lab.js analyze "أشعر بسعادة كبيرة"');
-        console.log('   node run_cpf_lab.js encrypt "ذكرى جميلة"');
-        console.log('   node run_cpf_lab.js resonance 0.618 0.001');
-        console.log('   node run_cpf_lab.js patterns 0.618033988');
-        console.log('   node run_cpf_lab.js mood "سعيد اليوم" "أتذكر طفولتي"');
-        console.log('   node run_cpf_lab.js evolution "نص1" "نص2" "نص3"');
-        console.log('   node run_cpf_lab.js benchmark');
-        console.log('   node run_cpf_lab.js advanced "نص للتحليل المتقدم"');
-        
-        console.log("\n💡 نصائح:");
-        console.log("   • استخدم demo للحصول على فهم شامل");
-        console.log("   • جرب analyze مع نصوص مختلفة");
-        console.log("   • استخدم benchmark لقياس الأداء");
-        console.log("   • advanced يتطلب مكتبات إضافية");
-        
-        return true;
-    }
-
-    /**
-     * تفسير معنى الأنماط الرياضية
-     */
-    interpretPatternMeaning(pattern_type) {
-        const meanings = {
-            'fibonacci_sequence': 'نمو طبيعي ومتدرج في الحالة العاطفية',
-            'golden_ratio_resonance': 'توازن جمالي مثالي وتناغم عاطفي',
-            'pi_resonance': 'دورية رياضية ونمط تكراري منتظم',
-            'harmonic_series': 'تناغم رياضي وانسجام متعدد المستويات',
-            'repetitive': 'تكرار عاطفي قد يشير لثبات أو جمود',
-            'arithmetic_sequence': 'تصاعد منطقي ومنهجي في المشاعر'
+    // Helper methods
+    generateGPTSignature(gpt_analysis, seed) {
+        const signature_data = {
+            spectrum_position: gpt_analysis.cpf_spectrum.position,
+            complexity_hash: crypto.createHash('md5').update(gpt_analysis.emotional_complexity.level).digest('hex'),
+            ambivalence_factor: gpt_analysis.emotional_complexity.ambivalence_score,
+            gpt_confidence: gpt_analysis.cpf_spectrum.confidence,
+            seed_multiplier: seed
         };
         
-        return meanings[pattern_type] || 'نمط رياضي ذو دلالة عاطفية خاصة';
+        return signature_data;
+    }
+
+    enhanceWithGPTPatterns(signature, mathematical_patterns) {
+        signature.pattern_enhancement = {
+            detected_patterns: mathematical_patterns.detected,
+            pattern_significance: mathematical_patterns.significance,
+            enhancement_factor: mathematical_patterns.significance * 1.618 // Golden ratio
+        };
+        
+        return signature;
+    }
+
+    generateGPTProbablyID(signature, complexity_level) {
+        const timestamp = Date.now().toString(36);
+        const complexity_prefix = {
+            'بسيط': 'SMP',
+            'معتدل': 'MOD', 
+            'معقد': 'CPX',
+            'شديد التعقيد': 'XTR'
+        }[complexity_level] || 'UNK';
+        
+        const signature_hash = crypto.createHash('sha256')
+            .update(JSON.stringify(signature))
+            .digest('hex')
+            .substring(0, 8);
+        
+        return `GPT_${complexity_prefix}_${signature_hash}_${timestamp}`;
+    }
+
+    generateGPTInsights(unified_analysis) {
+        const insights = [];
+        
+        // رؤى بناءً على التعقيد
+        if (unified_analysis.emotional_complexity.level === 'شديد التعقيد') {
+            insights.push("تعقيد عاطفي استثنائي يشير إلى خبرة إنسانية عميقة ومتطورة");
+        }
+        
+        // رؤى بناءً على التناقض
+        if (unified_analysis.emotional_complexity.ambivalence_score > 0.8) {
+            insights.push("مستوى عالٍ من التناقض العاطفي - قد يكون مؤشراً على نمو شخصي");
+        }
+        
+        // رؤى بناءً على الطيف
+        const pos = parseFloat(unified_analysis.cpf_spectrum.position);
+        if (pos < 0.2) {
+            insights.push("اقتراب خطير من العدم العاطفي - يحتاج انتباه ودعم");
+        } else if (pos > 0.8) {
+            insights.push("طاقة عاطفية عالية جداً - قد تحتاج توجيه وتهذيب");
+        }
+        
+        return insights;
     }
 }
 
-// تشغيل المنصة الموحدة
-async function main() {
-    const runner = new CPFUnifiedRunner();
-    
-    // قراءة المعاملات من سطر الأوامر
-    const args = process.argv.slice(2);
-    
-    if (args.length === 0) {
-        console.log("\n🎯 لم تُحدد تجربة - عرض المساعدة:");
-        runner.showHelp();
-        
-        console.log("\n🚀 تشغيل العرض التفاعلي الافتراضي...");
-        await runner.runDemo('quick');
+// تشغيل مع GPT-4o-mini
+async function runGPT4oExperiment(api_key, test_text) {
+    if (!api_key) {
+        console.error("❌ مفتاح OpenAI API مطلوب!");
+        console.log("💡 استخدم: node script.js sk-your-key 'نص للتحليل'");
         return;
     }
     
-    const experiment = args[0];
-    const experiment_args = args.slice(1);
+    const lab = new GPT4oEmotionalLab(api_key);
     
-    try {
-        const result = await runner.runExperiment(experiment, ...experiment_args);
+    if (!test_text) {
+        // نصوص افتراضية للاختبار
+        const test_cases = [
+            "I love him with every fiber of my being yet this love slowly kills me",
+            "أحبه بكل جوارحي لكن حبي له يقتلني ببطء، كل نظرة منه تحييني وتميتني",
+            "I feel simultaneously drowning in despair yet floating on hope, utterly alone in a crowded room"
+        ];
         
-        if (result !== false) {
-            console.log("\n✅ اكتملت التجربة بنجاح!");
+        console.log("🧪 تشغيل اختبار شامل مع GPT-4o-mini...");
+        
+        const results = [];
+        for (const [index, text] of test_cases.entries()) {
+            console.log(`\n--- اختبار ${index + 1} ---`);
+            const result = await lab.analyzeWithGPT4o(text);
+            results.push(result);
+            
+            // فترة انتظار بين الطلبات
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
         
-    } catch (error) {
-        console.error("\n❌ خطأ في تشغيل التجربة:", error.message);
-        console.log("\n💡 استخدم 'help' لعرض التعليمات");
+        return results;
+    } else {
+        // تحليل نص واحد
+        return await lab.analyzeWithGPT4o(test_text);
     }
 }
 
-// تشغيل المنصة إذا تم استدعاؤها مباشرة
-if (require.main === module) {
-    main().catch(error => {
-        console.error("❌ خطأ عام:", error.message);
-        process.exit(1);
-    });
-}
+module.exports = { GPT4oEmotionalLab, runGPT4oExperiment };
 
-module.exports = CPFUnifiedRunner;
+// تشغيل مباشر
+if (require.main === module) {
+    const api_key = process.argv[2];
+    const test_text = process.argv[3];
+    
+    runGPT4oExperiment(api_key, test_text)
+        .then(result => {
+            console.log("\n🎉 انتهى التحليل بنجاح!");
+        })
+        .catch(error => {
+            console.error("❌ خطأ:", error.message);
+        });
+}

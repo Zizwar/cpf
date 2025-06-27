@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 CPF OpenAI Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen text-white">
+    
+    <div x-data="cpfApp()" x-init="loadModels()" class="container mx-auto px-4 py-8 max-w-6xl">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-6xl font-bold mb-3 bg-gradient-to-r from-emerald-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                🧠 CPF OpenAI Lab
+            </h1>
+            <p class="text-slate-300 text-lg">مختبر الهزاز العاطفي + OpenAI Models</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="grid lg:grid-cols-3 gap-6 mb-6">
+            
+            <!-- Text Input -->
+            <div class="lg:col-span-2 bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <label class="block text-slate-300 font-medium mb-3">
+                    <i class="fas fa-edit mr-2"></i>النص للتحليل:
+                </label>
+                <textarea 
+                    x-model="text" 
+                    class="w-full p-4 rounded-xl bg-black/30 border border-slate-500/50 text-white placeholder-slate-400 focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all" 
+                    rows="4" 
+                    placeholder="أحبه بكل جوارحي لكن حبي له يقتلني ببطء...">
+                </textarea>
+                
+                <div class="flex gap-3 mt-4">
+                    <button 
+                        @click="analyze()" 
+                        :disabled="loading || !text.trim()"
+                        class="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:from-gray-600 disabled:to-gray-600 px-6 py-3 rounded-xl font-medium transition-all shadow-lg">
+                        <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-brain'"></i>
+                        <span x-text="loading ? 'جاري التحليل...' : 'تحليل'"></span>
+                    </button>
+                    
+                    <button @click="clear()" class="bg-slate-600/50 hover:bg-slate-500/50 px-4 py-3 rounded-xl">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    
+                    <button @click="loadExample()" class="bg-purple-600/50 hover:bg-purple-500/50 px-4 py-3 rounded-xl">
+                        <i class="fas fa-magic"></i> مثال
+                    </button>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 class="text-lg font-bold mb-4 text-cyan-300">
+                    <i class="fas fa-cogs mr-2"></i>الإعدادات
+                </h3>
+                
+                <!-- Model Selection -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2 text-slate-300">النموذج:</label>
+                    <select x-model="selectedModel" class="w-full p-2 rounded-lg bg-black/30 border border-slate-500/50 text-white">
+                        <template x-for="model in models" :key="model.id">
+                            <option :value="model.id" x-text="model.name"></option>
+                        </template>
+                    </select>
+                    <div class="text-xs text-slate-400 mt-1" x-show="selectedModel && models.find(m => m.id === selectedModel)">
+                        <span x-text="'Input: $' + models.find(m => m.id === selectedModel)?.pricing.input + '/1M'"></span> |
+                        <span x-text="'Output: $' + models.find(m => m.id === selectedModel)?.pricing.output + '/1M'"></span>
+                    </div>
+                </div>
+
+                <!-- Temperature -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2 text-slate-300">
+                        الحرارة: <span x-text="temperature"></span>
+                    </label>
+                    <input 
+                        type="range" 
+                        x-model="temperature" 
+                        min="0" 
+                        max="2" 
+                        step="0.1" 
+                        class="w-full accent-cyan-500">
+                    <div class="flex justify-between text-xs text-slate-400 mt-1">
+                        <span>دقيق</span>
+                        <span>إبداعي</span>
+                    </div>
+                </div>
+
+                <!-- Cost Display -->
+                <div x-show="result?.cost" class="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                    <div class="text-sm text-green-300">
+                        <div class="flex justify-between">
+                            <span>التكلفة:</span>
+                            <span x-text="'$' + result?.cost?.total_cost.toFixed(6)"></span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span>الوقت:</span>
+                            <span x-text="result?.duration_ms + 'ms'"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div x-show="result" class="grid lg:grid-cols-4 gap-6">
+            
+            <!-- AI Analysis -->
+            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 class="text-xl font-bold mb-4 text-emerald-300">
+                    <i class="fas fa-robot mr-2"></i>تحليل AI
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-white" x-text="result?.ai_result?.spectrum?.toFixed(4)"></div>
+                        <div class="text-emerald-200 text-sm">طيف المشاعر</div>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm">
+                        <div><strong>💭 العاطفة:</strong> <span x-text="result?.ai_result?.emotion"></span></div>
+                        <div><strong>🎯 الشدة:</strong> <span x-text="result?.ai_result?.intensity">/10</span></div>
+                        <div><strong>🧩 التعقيد:</strong> <span x-text="result?.ai_result?.complexity"></span></div>
+                        <div><strong>📊 الثقة:</strong> <span x-text="(result?.ai_result?.confidence * 100)?.toFixed(1) + '%'"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Oscillators -->
+            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 class="text-xl font-bold mb-4 text-cyan-300">
+                    <i class="fas fa-sliders-h mr-2"></i>الهزازات
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-2 text-sm">
+                            <span>🔵 الوجود</span>
+                            <span x-text="result?.cpf_result?.oscillator_state?.existence"></span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full transition-all duration-1000" 
+                                 :style="'width: ' + ((result?.cpf_result?.oscillator_state?.existence || 0) * 100) + '%'"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between mb-2 text-sm">
+                            <span>🟡 الديناميكي</span>
+                            <span x-text="result?.cpf_result?.oscillator_state?.dynamic?.toFixed(4)"></span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2">
+                            <div class="bg-yellow-500 h-2 rounded-full transition-all duration-1000" 
+                                 :style="'width: ' + ((result?.cpf_result?.oscillator_state?.dynamic || 0) * 100) + '%'"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between mb-2 text-sm">
+                            <span>🔴 القاضي</span>
+                            <span x-text="result?.cpf_result?.oscillator_state?.judge?.toFixed(4)"></span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2">
+                            <div class="bg-red-500 h-2 rounded-full transition-all duration-1000" 
+                                 :style="'width: ' + ((result?.cpf_result?.oscillator_state?.judge || 0) * 100) + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spectrum -->
+            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 class="text-xl font-bold mb-4 text-purple-300">
+                    <i class="fas fa-rainbow mr-2"></i>الطيف
+                </h3>
+                
+                <div class="mb-4">
+                    <div class="w-full h-8 bg-gradient-to-r from-purple-800 via-blue-500 via-green-400 via-yellow-400 to-red-600 rounded-full relative">
+                        <div 
+                            class="absolute w-1 h-full bg-white shadow-lg transition-all duration-1000"
+                            :style="'left: calc(' + ((result?.ai_result?.spectrum || 0.5) * 100) + '% - 2px)'">
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-xs mt-2 text-slate-400">
+                        <span>عدم</span>
+                        <span>حياد</span>
+                        <span>ألم</span>
+                    </div>
+                </div>
+                
+                <div class="text-sm">
+                    <div class="font-medium text-purple-200" x-text="result?.cpf_result?.spectrum_analysis?.category"></div>
+                    <div class="text-slate-300 text-xs mt-1" x-text="result?.cpf_result?.spectrum_analysis?.interpretation"></div>
+                </div>
+            </div>
+
+            <!-- Encryption -->
+            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 class="text-xl font-bold mb-4 text-orange-300">
+                    <i class="fas fa-lock mr-2"></i>التشفير
+                </h3>
+                
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <strong class="text-orange-200">🏷️ البصمة:</strong>
+                        <code class="block bg-black/30 p-2 rounded mt-1 text-xs break-all" x-text="result?.encryption?.probably_id"></code>
+                    </div>
+                    <div>
+                        <strong class="text-orange-200">🌱 البذرة:</strong>
+                        <div class="font-mono text-xs" x-text="result?.encryption?.seed_value?.toFixed(8)"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <div x-show="error" class="bg-red-500/20 border border-red-500/50 rounded-xl p-4 mt-4">
+            <div class="flex items-center gap-2 text-red-200">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span x-text="error"></span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-slate-400 text-sm">
+            <i class="fas fa-atom mr-1"></i>
+            CPF Framework + OpenAI API + Alpine.js
+        </div>
+    </div>
+
+    <script>
+        function cpfApp() {
+            return {
+                text: 'أحبه بكل جوارحي لكن حبي له يقتلني ببطء، كل نظرة منه تحييني وتميتني في آن واحد',
+                selectedModel: 'gpt-4o-mini',
+                temperature: 0.3,
+                models: [],
+                result: null,
+                loading: false,
+                error: null,
+
+                async loadModels() {
+                    try {
+                        const res = await fetch('/api/models')
+                        const data = await res.json()
+                        this.models = data.models
+                    } catch (err) {
+                        console.warn('Failed to load models:', err)
+                    }
+                },
+
+                async analyze() {
+                    if (!this.text.trim()) {
+                        this.error = 'يرجى إدخال نص للتحليل'
+                        return
+                    }
+
+                    this.loading = true
+                    this.error = null
+
+                    try {
+                        const res = await fetch('/api/analyze', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                text: this.text,
+                                model: this.selectedModel,
+                                temperature: this.temperature
+                            })
+                        })
+
+                        if (!res.ok) {
+                            const error = await res.json()
+                            throw new Error(error.error || 'خطأ في الخادم')
+                        }
+                        
+                        this.result = await res.json()
+                        
+                    } catch (err) {
+                        this.error = err.message
+                    } finally {
+                        this.loading = false
+                    }
+                },
+
+                clear() {
+                    this.text = ''
+                    this.result = null
+                    this.error = null
+                },
+
+                loadExample() {
+                    const examples = [
+                        'أحبه بكل جوارحي لكن حبي له يقتلني ببطء',
+                        'أشعر بفرح عميق وخوف شديد في آن واحد',
+                        'أستيقظ كل صباح ممتناً للحياة لكن مرعوباً من المجهول',
+                        'I feel simultaneously drowning in despair yet floating on hope',
+                        'غضب شديد يغلي في عروقي مثل البركان الثائر',
+                        'سكينة وهدوء تام يلف روحي في عناق دافئ'
+                    ]
+                    this.text = examples[Math.floor(Math.random() * examples.length)]
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -12,6 +12,9 @@
     "benchmark": "node benchmark.js"
   },
   "dependencies": {
+    "@hono/node-server": "^1.14.4",
+    "hono": "^4.8.3",
+    "node-fetch": "^3.3.2",
     "sentiment": "^5.0.2"
   },
   "optionalDependencies": {

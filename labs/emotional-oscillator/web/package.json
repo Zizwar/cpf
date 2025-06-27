@@ -1,0 +1,22 @@
+{
+  "name": "cpf-web-lab",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "🧠 مختبر الهزاز العاطفي - Web API",
+  "main": "web-server.js",
+  "scripts": {
+    "dev": "node web-server.js",
+    "start": "node web-server.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.4",
+    "hono": "^4.8.3",
+    "openai": "^5.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
