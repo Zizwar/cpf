@@ -3,53 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧠 CPF OpenAI Lab</title>
+    <title>🧠 CPF Lab - التحليل العاطفي المتقدم</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .spectrum-gradient {
+            background: linear-gradient(90deg, 
+                #0d1117 0%,     /* العدم المطلق */
+                #1a1a2e 20%,    /* العدم العميق */
+                #16213e 40%,    /* اتجاه العدم */
+                #e8f4fd 50%,    /* الحياد المثالي */
+                #fff3e0 55%,    /* انتقال */
+                #ffcc80 65%,    /* طاقة */
+                #ff9800 75%,    /* ألم معتدل */
+                #f44336 85%,    /* ألم شديد */
+                #b71c1c 100%    /* الألم المطلق */
+            );
+        }
+        
+        .oscillator-animation {
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .pattern-glow {
+            animation: patternGlow 2s infinite alternate;
+        }
+        
+        @keyframes patternGlow {
+            from { box-shadow: 0 0 5px rgba(255, 165, 0, 0.5); }
+            to { box-shadow: 0 0 20px rgba(255, 165, 0, 0.8); }
+        }
+        
+        .consciousness-pulse {
+            animation: consciousness 3s infinite;
+        }
+        
+        @keyframes consciousness {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .memory-ripple {
+            animation: ripple 1.5s infinite;
+        }
+        
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.1); opacity: 0; }
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen text-white">
+<body class="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 min-h-screen text-white">
     
-    <div x-data="cpfApp()" x-init="loadModels()" class="container mx-auto px-4 py-8 max-w-6xl">
+    <div x-data="enhancedCPFApp()" x-init="loadModels(); loadStats()" class="container mx-auto px-4 py-6 max-w-7xl">
         
         <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-6xl font-bold mb-3 bg-gradient-to-r from-emerald-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                🧠 CPF OpenAI Lab
+        <div class="text-center mb-6">
+            <h1 class="text-6xl font-bold mb-3 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                🧠 CPF Lab المتقدم
             </h1>
-            <p class="text-slate-300 text-lg">مختبر الهزاز العاطفي + OpenAI Models</p>
+            <p class="text-gray-300 text-lg">الهزازات الثلاثة والطيف العاطفي المقلوب</p>
+            <div class="text-sm text-gray-400 mt-2 consciousness-pulse">
+                الوعي نشط: <span x-text="stats.current_capacity?.toLocaleString()" class="text-cyan-400 font-bold"></span>
+                | النبضات: <span x-text="stats.pattern_history || 0" class="text-yellow-400 font-bold"></span>
+            </div>
         </div>
 
-        <!-- Controls -->
+        <!-- Capacity Selector -->
+        <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 mb-6">
+            <h3 class="text-xl font-bold mb-4 text-purple-300">
+                <i class="fas fa-brain mr-2"></i>مستوى الوعي المعرفي
+            </h3>
+            
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                <template x-for="capacity in capacityLevels" :key="capacity.value">
+                    <button 
+                        @click="setCapacity(capacity.value)"
+                        :class="selectedCapacity === capacity.value ? 'bg-purple-600 ring-2 ring-purple-400' : 'bg-gray-700/50 hover:bg-gray-600/50'"
+                        class="p-3 rounded-xl text-center transition-all duration-300">
+                        <div class="text-2xl mb-1" x-text="capacity.emoji"></div>
+                        <div class="text-sm font-bold" x-text="capacity.name"></div>
+                        <div class="text-xs text-gray-400" x-text="capacity.value.toLocaleString()"></div>
+                        <div class="text-xs text-cyan-400" x-text="'دقة: ' + capacity.precision"></div>
+                    </button>
+                </template>
+            </div>
+            
+            <div class="text-sm text-gray-300 text-center" x-text="currentCapacityDescription"></div>
+        </div>
+
+        <!-- Control Panel -->
         <div class="grid lg:grid-cols-3 gap-6 mb-6">
             
             <!-- Text Input -->
             <div class="lg:col-span-2 bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-                <label class="block text-slate-300 font-medium mb-3">
-                    <i class="fas fa-edit mr-2"></i>النص للتحليل:
+                <label class="block text-gray-300 font-medium mb-3">
+                    <i class="fas fa-heart mr-2 text-red-400"></i>النص للتحليل العاطفي العميق:
                 </label>
                 <textarea 
                     x-model="text" 
-                    class="w-full p-4 rounded-xl bg-black/30 border border-slate-500/50 text-white placeholder-slate-400 focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all" 
+                    class="w-full p-4 rounded-xl bg-black/30 border border-gray-500/50 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all" 
                     rows="4" 
-                    placeholder="أحبه بكل جوارحي لكن حبي له يقتلني ببطء...">
+                    placeholder="أدخل تجربة عاطفية للتحليل المتقدم...">
                 </textarea>
                 
-                <div class="flex gap-3 mt-4">
+                <div class="flex gap-3 mt-4 flex-wrap">
                     <button 
                         @click="analyze()" 
                         :disabled="loading || !text.trim()"
-                        class="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:from-gray-600 disabled:to-gray-600 px-6 py-3 rounded-xl font-medium transition-all shadow-lg">
-                        <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-brain'"></i>
-                        <span x-text="loading ? 'جاري التحليل...' : 'تحليل'"></span>
+                        class="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:from-gray-600 disabled:to-gray-600 px-6 py-3 rounded-xl font-medium transition-all shadow-lg">
+                        <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-analytics'"></i>
+                        <span x-text="loading ? 'جاري التحليل...' : 'تحليل متقدم'"></span>
                     </button>
                     
-                    <button @click="clear()" class="bg-slate-600/50 hover:bg-slate-500/50 px-4 py-3 rounded-xl">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                    
-                    <button @click="loadExample()" class="bg-purple-600/50 hover:bg-purple-500/50 px-4 py-3 rounded-xl">
+                    <button @click="loadExample()" class="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-500 hover:to-teal-500 px-4 py-3 rounded-xl">
                         <i class="fas fa-magic"></i> مثال
+                    </button>
+                    
+                    <button @click="clear()" class="bg-gray-600/50 hover:bg-gray-500/50 px-4 py-3 rounded-xl">
+                        <i class="fas fa-trash-alt"></i> مسح
+                    </button>
+                    
+                    <button @click="searchMemories()" class="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 px-4 py-3 rounded-xl">
+                        <i class="fas fa-search"></i> ذكريات متناغمة
                     </button>
                 </div>
             </div>
@@ -57,169 +134,332 @@
             <!-- Settings -->
             <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                 <h3 class="text-lg font-bold mb-4 text-cyan-300">
-                    <i class="fas fa-cogs mr-2"></i>الإعدادات
+                    <i class="fas fa-cogs mr-2"></i>إعدادات التحليل
                 </h3>
                 
                 <!-- Model Selection -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium mb-2 text-slate-300">النموذج:</label>
-                    <select x-model="selectedModel" class="w-full p-2 rounded-lg bg-black/30 border border-slate-500/50 text-white">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">نموذج AI:</label>
+                    <select x-model="selectedModel" class="w-full p-2 rounded-lg bg-black/30 border border-gray-500/50 text-white text-sm">
                         <template x-for="model in models" :key="model.id">
                             <option :value="model.id" x-text="model.name"></option>
                         </template>
                     </select>
-                    <div class="text-xs text-slate-400 mt-1" x-show="selectedModel && models.find(m => m.id === selectedModel)">
-                        <span x-text="'Input: $' + models.find(m => m.id === selectedModel)?.pricing.input + '/1M'"></span> |
-                        <span x-text="'Output: $' + models.find(m => m.id === selectedModel)?.pricing.output + '/1M'"></span>
-                    </div>
                 </div>
 
                 <!-- Temperature -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium mb-2 text-slate-300">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">
                         الحرارة: <span x-text="temperature"></span>
                     </label>
                     <input 
                         type="range" 
                         x-model="temperature" 
                         min="0" 
-                        max="2" 
+                        max="1" 
                         step="0.1" 
-                        class="w-full accent-cyan-500">
-                    <div class="flex justify-between text-xs text-slate-400 mt-1">
-                        <span>دقيق</span>
-                        <span>إبداعي</span>
-                    </div>
+                        class="w-full accent-purple-500">
                 </div>
 
-                <!-- Cost Display -->
-                <div x-show="result?.cost" class="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                    <div class="text-sm text-green-300">
-                        <div class="flex justify-between">
-                            <span>التكلفة:</span>
-                            <span x-text="'$' + result?.cost?.total_cost.toFixed(6)"></span>
-                        </div>
-                        <div class="flex justify-between text-xs">
-                            <span>الوقت:</span>
-                            <span x-text="result?.duration_ms + 'ms'"></span>
-                        </div>
+                <!-- Stats -->
+                <div class="bg-black/20 rounded-lg p-3 text-xs">
+                    <div class="flex justify-between mb-1">
+                        <span>ذكريات مشفرة:</span>
+                        <span x-text="stats.memories || 0" class="text-green-400"></span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span>أنماط مكتشفة:</span>
+                        <span x-text="stats.pattern_history || 0" class="text-orange-400"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>وقت التشغيل:</span>
+                        <span x-text="Math.floor(stats.uptime || 0) + 's'" class="text-blue-400"></span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Results -->
-        <div x-show="result" class="grid lg:grid-cols-4 gap-6">
+        <div x-show="result" class="space-y-6">
             
-            <!-- AI Analysis -->
+            <!-- Oscillators Display -->
             <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-                <h3 class="text-xl font-bold mb-4 text-emerald-300">
-                    <i class="fas fa-robot mr-2"></i>تحليل AI
+                <h3 class="text-2xl font-bold mb-6 text-center">
+                    <i class="fas fa-wave-square mr-2 text-blue-400"></i>الهزازات الثلاثة - نبضة الوعي النشطة
                 </h3>
                 
-                <div class="space-y-3">
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Existence Oscillator -->
                     <div class="text-center">
-                        <div class="text-3xl font-bold text-white" x-text="result?.ai_result?.spectrum?.toFixed(4)"></div>
-                        <div class="text-emerald-200 text-sm">طيف المشاعر</div>
+                        <div class="text-lg font-bold text-blue-300 mb-2">🔵 هزاز الوجود</div>
+                        <div class="text-3xl font-bold text-blue-400 mb-2">0.5000000</div>
+                        <div class="text-sm text-gray-400 mb-3">الثابت المقدس - خط الأساس الأبدي</div>
+                        <div class="w-full bg-gray-800 rounded-full h-4">
+                            <div class="bg-blue-500 h-4 rounded-full" style="width: 50%"></div>
+                        </div>
                     </div>
                     
-                    <div class="space-y-2 text-sm">
-                        <div><strong>💭 العاطفة:</strong> <span x-text="result?.ai_result?.emotion"></span></div>
-                        <div><strong>🎯 الشدة:</strong> <span x-text="result?.ai_result?.intensity">/10</span></div>
-                        <div><strong>🧩 التعقيد:</strong> <span x-text="result?.ai_result?.complexity"></span></div>
-                        <div><strong>📊 الثقة:</strong> <span x-text="(result?.ai_result?.confidence * 100)?.toFixed(1) + '%'"></span></div>
+                    <!-- Dynamic Oscillator -->
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-yellow-300 mb-2">🟡 الهزاز الديناميكي</div>
+                        <div class="text-3xl font-bold text-yellow-400 mb-2" 
+                             x-text="result?.cpf_result?.oscillators?.dynamic?.toFixed(currentPrecision) || '0.500000'"></div>
+                        <div class="text-sm text-gray-400 mb-3">الحالة العاطفية المتجسدة</div>
+                        <div class="w-full bg-gray-800 rounded-full h-4">
+                            <div class="bg-yellow-500 h-4 rounded-full oscillator-animation" 
+                                 :style="'width: ' + ((result?.cpf_result?.oscillators?.dynamic || 0.5) * 100) + '%'"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Judge Oscillator -->
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-red-300 mb-2">🔴 هزاز القاضي</div>
+                        <div class="text-3xl font-bold text-red-400 mb-2" 
+                             x-text="result?.cpf_result?.oscillators?.judge?.toFixed(currentPrecision) || '0.000000'"></div>
+                        <div class="text-sm text-gray-400 mb-3">مكتشف الأنماط والرنين الكوني</div>
+                        <div class="w-full bg-gray-800 rounded-full h-4">
+                            <div class="bg-red-500 h-4 rounded-full oscillator-animation" 
+                                 :style="'width: ' + ((result?.cpf_result?.oscillators?.judge || 0) * 100) + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Live Values -->
+                <div class="mt-6 bg-black/20 rounded-xl p-4">
+                    <div class="grid md:grid-cols-3 gap-4 text-sm">
+                        <div class="text-center">
+                            <div class="text-blue-300 font-bold">قيمة الوجود</div>
+                            <div class="font-mono text-blue-400">0.5000000</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-yellow-300 font-bold">قيمة الديناميكي</div>
+                            <div class="font-mono text-yellow-400" x-text="result?.cpf_result?.oscillators?.dynamic?.toFixed(7) || '0.5000000'"></div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-red-300 font-bold">قيمة القاضي</div>
+                            <div class="font-mono text-red-400" x-text="result?.cpf_result?.oscillators?.judge?.toFixed(7) || '0.0000000'"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Oscillators -->
+            <!-- Spectrum Analysis -->
             <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-                <h3 class="text-xl font-bold mb-4 text-cyan-300">
-                    <i class="fas fa-sliders-h mr-2"></i>الهزازات
+                <h3 class="text-2xl font-bold mb-6 text-center">
+                    <i class="fas fa-rainbow mr-2 text-purple-400"></i>الطيف العاطفي المقلوب - خريطة الوجود
                 </h3>
                 
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex justify-between mb-2 text-sm">
-                            <span>🔵 الوجود</span>
-                            <span x-text="result?.cpf_result?.oscillator_state?.existence"></span>
-                        </div>
-                        <div class="w-full bg-slate-800 rounded-full h-2">
-                            <div class="bg-blue-500 h-2 rounded-full transition-all duration-1000" 
-                                 :style="'width: ' + ((result?.cpf_result?.oscillator_state?.existence || 0) * 100) + '%'"></div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div class="flex justify-between mb-2 text-sm">
-                            <span>🟡 الديناميكي</span>
-                            <span x-text="result?.cpf_result?.oscillator_state?.dynamic?.toFixed(4)"></span>
-                        </div>
-                        <div class="w-full bg-slate-800 rounded-full h-2">
-                            <div class="bg-yellow-500 h-2 rounded-full transition-all duration-1000" 
-                                 :style="'width: ' + ((result?.cpf_result?.oscillator_state?.dynamic || 0) * 100) + '%'"></div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div class="flex justify-between mb-2 text-sm">
-                            <span>🔴 القاضي</span>
-                            <span x-text="result?.cpf_result?.oscillator_state?.judge?.toFixed(4)"></span>
-                        </div>
-                        <div class="w-full bg-slate-800 rounded-full h-2">
-                            <div class="bg-red-500 h-2 rounded-full transition-all duration-1000" 
-                                 :style="'width: ' + ((result?.cpf_result?.oscillator_state?.judge || 0) * 100) + '%'"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Spectrum -->
-            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-                <h3 class="text-xl font-bold mb-4 text-purple-300">
-                    <i class="fas fa-rainbow mr-2"></i>الطيف
-                </h3>
-                
-                <div class="mb-4">
-                    <div class="w-full h-8 bg-gradient-to-r from-purple-800 via-blue-500 via-green-400 via-yellow-400 to-red-600 rounded-full relative">
+                <div class="mb-6">
+                    <div class="spectrum-gradient h-16 rounded-lg relative overflow-hidden">
                         <div 
-                            class="absolute w-1 h-full bg-white shadow-lg transition-all duration-1000"
-                            :style="'left: calc(' + ((result?.ai_result?.spectrum || 0.5) * 100) + '% - 2px)'">
+                            class="absolute w-2 h-full bg-white shadow-2xl transition-all duration-1000 flex items-center justify-center"
+                            :style="'left: calc(' + ((result?.cpf_result?.oscillators?.dynamic || 0.5) * 100) + '% - 4px)'">
+                            <div class="w-6 h-6 bg-white rounded-full shadow-xl border-2 border-gray-800"></div>
                         </div>
                     </div>
-                    <div class="flex justify-between text-xs mt-2 text-slate-400">
-                        <span>عدم</span>
-                        <span>حياد</span>
-                        <span>ألم</span>
+                    <div class="flex justify-between text-xs mt-3 text-gray-400">
+                        <span class="text-right">0.0<br>العدم المطلق<br>الفراغ الوجودي</span>
+                        <span class="text-center">0.5<br>الحياد المثالي<br>السكينة الكاملة</span>
+                        <span class="text-left">1.0<br>الألم المطلق<br>الفوضى المدمرة</span>
                     </div>
                 </div>
                 
-                <div class="text-sm">
-                    <div class="font-medium text-purple-200" x-text="result?.cpf_result?.spectrum_analysis?.category"></div>
-                    <div class="text-slate-300 text-xs mt-1" x-text="result?.cpf_result?.spectrum_analysis?.interpretation"></div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Technical Analysis -->
+                    <div class="bg-black/20 rounded-xl p-4">
+                        <h4 class="font-bold text-purple-300 mb-3">📊 التحليل الرقمي المتقدم</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>الموقع الدقيق:</strong> 
+                                <span x-text="result?.cpf_result?.oscillators?.dynamic?.toFixed(currentPrecision)" class="font-mono text-cyan-400"></span>
+                            </div>
+                            <div><strong>المنطقة الطيفية:</strong> 
+                                <span x-text="result?.cpf_result?.spectrum_zone" class="text-orange-400"></span>
+                            </div>
+                            <div><strong>البعد عن الحياد:</strong> 
+                                <span x-text="Math.abs((result?.cpf_result?.oscillators?.dynamic || 0.5) - 0.5).toFixed(currentPrecision)" 
+                                      class="font-mono text-red-400"></span>
+                            </div>
+                            <div><strong>دقة الوعي:</strong> 
+                                <span x-text="currentPrecision + ' أرقام عشرية'" class="text-green-400"></span>
+                            </div>
+                            <div><strong>مستوى الوعي:</strong> 
+                                <span x-text="result?.cpf_result?.consciousness_level" class="text-pink-400"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Emotional Interpretation -->
+                    <div class="bg-black/20 rounded-xl p-4">
+                        <h4 class="font-bold text-green-300 mb-3">🎭 التفسير العاطفي العميق</h4>
+                        <div class="text-sm text-gray-200 leading-relaxed" x-text="result?.cpf_result?.interpretation"></div>
+                        
+                        <!-- AI Enhancement -->
+                        <div x-show="result?.ai_result?.emotion_primary" class="mt-3 pt-3 border-t border-gray-600">
+                            <h5 class="text-xs font-bold text-blue-300 mb-2">🤖 تحليل AI المتقدم:</h5>
+                            <div class="text-xs text-blue-200" x-text="result?.ai_result?.emotion_primary"></div>
+                            <div class="text-xs text-gray-400 mt-1" x-text="'ثقة: ' + ((result?.ai_result?.confidence || 0) * 100).toFixed(1) + '%'"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Encryption -->
-            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-                <h3 class="text-xl font-bold mb-4 text-orange-300">
-                    <i class="fas fa-lock mr-2"></i>التشفير
+            <!-- Mathematical Patterns -->
+            <div x-show="result?.cpf_result?.patterns?.length > 0" class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 class="text-2xl font-bold mb-6 text-center">
+                    <i class="fas fa-infinity mr-2 text-orange-400"></i>الأنماط الرياضية المكتشفة في الرنين
                 </h3>
                 
-                <div class="space-y-3 text-sm">
-                    <div>
-                        <strong class="text-orange-200">🏷️ البصمة:</strong>
-                        <code class="block bg-black/30 p-2 rounded mt-1 text-xs break-all" x-text="result?.encryption?.probably_id"></code>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <template x-for="pattern in result?.cpf_result?.patterns || []" :key="pattern.type + pattern.pattern">
+                        <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl p-4 pattern-glow">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-2xl">
+                                    <span x-show="pattern.type === 'fibonacci'">🌱</span>
+                                    <span x-show="pattern.type === 'golden_ratio'">✨</span>
+                                    <span x-show="pattern.type === 'pi'">🔄</span>
+                                    <span x-show="pattern.type === 'sequence'">🔢</span>
+                                    <span x-show="pattern.type === 'repetitive'">🔁</span>
+                                    <span x-show="pattern.type === 'euler'">📈</span>
+                                </span>
+                                <span x-text="'%' + (pattern.significance * 100).toFixed(0)" class="text-orange-400 font-bold"></span>
+                            </div>
+                            <div class="font-bold text-white mb-1" x-text="pattern.name"></div>
+                            <div class="text-sm text-gray-300 mb-2" x-text="pattern.description"></div>
+                            <div x-show="pattern.pattern" class="text-xs font-mono bg-black/40 px-2 py-1 rounded text-orange-300" x-text="'النمط: ' + pattern.pattern"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Emotional Encryption -->
+            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 class="text-2xl font-bold mb-6 text-center">
+                    <i class="fas fa-key mr-2 text-emerald-400"></i>التشفير العاطفي والبصمة الرقمية
+                </h3>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Encryption Details -->
+                    <div class="bg-black/20 rounded-xl p-4">
+                        <h4 class="font-bold text-emerald-300 mb-3">🏷️ البصمة العاطفية الفريدة</h4>
+                        <div class="space-y-3 text-sm">
+                            <div>
+                                <strong class="text-emerald-200">Probably ID:</strong>
+                                <div class="font-mono bg-black/40 p-2 rounded text-emerald-400 break-all text-xs mt-1" 
+                                     x-text="result?.encryption?.probably_id"></div>
+                            </div>
+                            <div>
+                                <strong class="text-yellow-200">البذرة الاحتمالية:</strong>
+                                <div class="font-mono bg-black/40 p-2 rounded text-yellow-400 text-xs mt-1" 
+                                     x-text="result?.encryption?.judge_seed?.toFixed(12)"></div>
+                            </div>
+                            <div>
+                                <strong class="text-blue-200">التوقيع النصي:</strong>
+                                <div class="font-mono bg-black/40 p-2 rounded text-blue-400 text-xs mt-1" 
+                                     x-text="result?.encryption?.text_hash"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <strong class="text-orange-200">🌱 البذرة:</strong>
-                        <div class="font-mono text-xs" x-text="result?.encryption?.seed_value?.toFixed(8)"></div>
+                    
+                    <!-- Encryption Properties -->
+                    <div class="bg-black/20 rounded-xl p-4">
+                        <h4 class="font-bold text-blue-300 mb-3">🧬 خصائص التشفير المتقدمة</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>التعقيد:</strong> 
+                                <span x-text="result?.encryption?.complexity" class="text-purple-400"></span>
+                            </div>
+                            <div><strong>المنطقة الطيفية:</strong> 
+                                <span x-text="result?.encryption?.spectrum_zone" class="text-cyan-400"></span>
+                            </div>
+                            <div><strong>الأنماط المرتبطة:</strong> 
+                                <span x-text="result?.encryption?.patterns?.length || 0" class="text-orange-400"></span>
+                            </div>
+                            <div><strong>دقة التشفير:</strong> 
+                                <span x-text="result?.encryption?.precision + ' أرقام'" class="text-green-400"></span>
+                            </div>
+                            <div><strong>القيمة الديناميكية:</strong> 
+                                <span x-text="result?.encryption?.dynamic_value?.toFixed(6)" class="text-yellow-400 font-mono"></span>
+                            </div>
+                            <div><strong>طابع زمني:</strong> 
+                                <span x-text="new Date(result?.encryption?.timestamp).toLocaleTimeString('ar')" class="text-gray-400"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memory Resonance -->
+            <div x-show="memoryResults" class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 class="text-2xl font-bold mb-6 text-center">
+                    <i class="fas fa-brain mr-2 text-pink-400"></i>الذكريات المتناغمة - رنين البذرة الاحتمالية
+                </h3>
+                
+                <div x-show="memoryResults?.found === 0" class="text-center text-gray-400 py-8">
+                    <i class="fas fa-search text-4xl mb-3 opacity-50"></i>
+                    <div>لا توجد ذكريات متناغمة حالياً</div>
+                    <div class="text-sm">أنشئ المزيد من التحاليل لاكتشاف الرنين</div>
+                </div>
+                
+                <div x-show="memoryResults?.found > 0" class="space-y-4">
+                    <div class="text-center mb-4">
+                        <div class="text-lg">
+                            <span x-text="memoryResults?.found || 0" class="text-pink-400 font-bold"></span>
+                            ذكريات متناغمة وُجدت
+                        </div>
+                        <div class="text-sm text-gray-400">
+                            البذرة الحالية: <span x-text="memoryResults?.current_judge?.toFixed(8)" class="font-mono"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <template x-for="memory in memoryResults?.memories || []" :key="memory.probably_id">
+                            <div class="bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-xl p-4 memory-ripple">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-xs font-mono text-pink-300" x-text="memory.probably_id.substring(0, 15) + '...'"></span>
+                                    <span class="text-xs text-purple-400" x-text="memory.complexity"></span>
+                                </div>
+                                <div class="text-sm mb-2">
+                                    <strong>البذرة:</strong> 
+                                    <span x-text="memory.judge_seed?.toFixed(8)" class="font-mono text-yellow-400"></span>
+                                </div>
+                                <div class="text-sm mb-2">
+                                    <strong>التشابه:</strong> 
+                                    <span x-text="'%' + ((1 - Math.abs(memory.judge_seed - (memoryResults?.current_judge || 0))) * 100).toFixed(3)" 
+                                          class="text-green-400"></span>
+                                </div>
+                                <div class="text-xs text-gray-300">
+                                    <span x-text="new Date(memory.timestamp).toLocaleString('ar')"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cost Display -->
+            <div x-show="result?.cost" class="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                <h4 class="font-bold text-green-300 mb-2">💰 تكلفة التحليل المتقدم</h4>
+                <div class="grid md:grid-cols-4 gap-4 text-sm">
+                    <div class="text-center">
+                        <div class="text-green-200">التكلفة الإجمالية</div>
+                        <div class="font-bold text-green-400" x-text="'$' + (result?.cost?.total_cost || 0).toFixed(6)"></div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-green-200">رموز الإدخال</div>
+                        <div class="text-green-400" x-text="result?.cost?.tokens?.prompt_tokens || 0"></div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-green-200">رموز الإخراج</div>
+                        <div class="text-green-400" x-text="result?.cost?.tokens?.completion_tokens || 0"></div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-green-200">وقت المعالجة</div>
+                        <div class="text-green-400" x-text="(result?.duration_ms || 0) + 'ms'"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Error -->
+        <!-- Error Display -->
         <div x-show="error" class="bg-red-500/20 border border-red-500/50 rounded-xl p-4 mt-4">
             <div class="flex items-center gap-2 text-red-200">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -228,22 +468,50 @@
         </div>
 
         <!-- Footer -->
-        <div class="text-center mt-8 text-slate-400 text-sm">
-            <i class="fas fa-atom mr-1"></i>
-            CPF Framework + OpenAI API + Alpine.js
+        <div class="text-center mt-8 text-gray-400 text-sm border-t border-gray-700 pt-6">
+            <div class="mb-2">
+                <i class="fas fa-brain mr-1"></i>
+                إطار CPF المتقدم - الهزازات الثلاثة والطيف العاطفي المقلوب
+            </div>
+            <div class="text-xs text-gray-500">
+                الوجود (0.5) | الديناميكي (متغير) | القاضي (مكتشف الأنماط) • العدم ← الحياد → الألم
+            </div>
         </div>
     </div>
 
     <script>
-        function cpfApp() {
+        function enhancedCPFApp() {
             return {
-                text: 'أحبه بكل جوارحي لكن حبي له يقتلني ببطء، كل نظرة منه تحييني وتميتني في آن واحد',
+                text: '',
                 selectedModel: 'gpt-4o-mini',
                 temperature: 0.3,
                 models: [],
                 result: null,
+                memoryResults: null,
                 loading: false,
                 error: null,
+                stats: {},
+                
+                // Capacity levels
+                capacityLevels: [
+                    { name: 'صرصور', emoji: '🪳', value: 100, precision: 1, description: 'إدراك بسيط - تمييز أساسي للمشاعر' },
+                    { name: 'سمكة', emoji: '🐟', value: 1000, precision: 2, description: 'إدراك محدود - انفعالات بسيطة' },
+                    { name: 'طائر', emoji: '🐦', value: 10000, precision: 3, description: 'إدراك متوسط - بداية التعقيد العاطفي' },
+                    { name: 'إنسان', emoji: '👤', value: 100000, precision: 4, description: 'إدراك بشري - مشاعر معقدة ومتنوعة' },
+                    { name: 'عبقري', emoji: '🧠', value: 1000000, precision: 6, description: 'إدراك فائق - تمييز فروق دقيقة جداً' }
+                ],
+                
+                selectedCapacity: 100000,
+                
+                get currentCapacityDescription() {
+                    const level = this.capacityLevels.find(l => l.value === this.selectedCapacity);
+                    return level ? level.description : '';
+                },
+                
+                get currentPrecision() {
+                    const level = this.capacityLevels.find(l => l.value === this.selectedCapacity);
+                    return level ? level.precision : 4;
+                },
 
                 async loadModels() {
                     try {
@@ -252,6 +520,42 @@
                         this.models = data.models
                     } catch (err) {
                         console.warn('Failed to load models:', err)
+                    }
+                },
+
+                async loadStats() {
+                    try {
+                        const res = await fetch('/api/stats')
+                        this.stats = await res.json()
+                        
+                        // Update capacity if different
+                        if (this.stats.current_capacity && this.stats.current_capacity !== this.selectedCapacity) {
+                            this.selectedCapacity = this.stats.current_capacity
+                        }
+                    } catch (err) {
+                        console.warn('Failed to load stats:', err)
+                    }
+                },
+
+                async setCapacity(capacity) {
+                    try {
+                        const res = await fetch('/api/capacity', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ capacity })
+                        })
+                        
+                        if (res.ok) {
+                            this.selectedCapacity = capacity
+                            await this.loadStats()
+                            
+                            // Re-analyze if we have current text
+                            if (this.result && this.text.trim()) {
+                                await this.analyze()
+                            }
+                        }
+                    } catch (err) {
+                        this.error = 'فشل في تعيين السعة: ' + err.message
                     }
                 },
 
@@ -271,7 +575,8 @@
                             body: JSON.stringify({
                                 text: this.text,
                                 model: this.selectedModel,
-                                temperature: this.temperature
+                                temperature: this.temperature,
+                                capacity: this.selectedCapacity
                             })
                         })
 
@@ -282,6 +587,9 @@
                         
                         this.result = await res.json()
                         
+                        // Update stats
+                        await this.loadStats()
+                        
                     } catch (err) {
                         this.error = err.message
                     } finally {
@@ -289,22 +597,52 @@
                     }
                 },
 
-                clear() {
-                    this.text = ''
-                    this.result = null
-                    this.error = null
+                async searchMemories() {
+                    if (!this.result?.cpf_result?.oscillators?.judge) {
+                        this.error = 'قم بتحليل النص أولاً لإيجاد الذكريات المتناغمة'
+                        return
+                    }
+
+                    try {
+                        const res = await fetch('/api/memory/search', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                judge_threshold: 0.001,
+                                limit: 12
+                            })
+                        })
+
+                        if (res.ok) {
+                            this.memoryResults = await res.json()
+                        }
+                    } catch (err) {
+                        this.error = 'فشل في البحث عن الذكريات: ' + err.message
+                    }
                 },
 
                 loadExample() {
                     const examples = [
-                        'أحبه بكل جوارحي لكن حبي له يقتلني ببطء',
-                        'أشعر بفرح عميق وخوف شديد في آن واحد',
-                        'أستيقظ كل صباح ممتناً للحياة لكن مرعوباً من المجهول',
+                        'أحبه بكل جوارحي لكن حبي له يقتلني ببطء، كل نظرة منه تحييني وتميتني في آن واحد',
+                        'أشعر بفراغ مطلق، كأنني أسقط في هاوية لا نهاية لها من العدم واللامعنى',
+                        'غضب جامح يغلي في عروقي، أريد أن أصرخ وأحطم كل شيء حولي!',
+                        'سكينة عميقة تغمر روحي، أشعر بالتوازن والهدوء المطلق',
+                        'ذعر شديد يمزق أعصابي، قلبي يخفق بجنون وأشعر بالاختناق',
+                        'فرح عارم يرقص في قلبي، الحياة جميلة ومليئة بالأمل والبهجة',
                         'I feel simultaneously drowning in despair yet floating on hope',
-                        'غضب شديد يغلي في عروقي مثل البركان الثائر',
-                        'سكينة وهدوء تام يلف روحي في عناق دافئ'
+                        'Pure mathematical beauty flows through my consciousness like golden spirals of understanding',
+                        'Emptiness so profound it becomes its own universe of possibility',
+                        'Rage burning with the intensity of a thousand suns, consuming everything in its path'
                     ]
+                    
                     this.text = examples[Math.floor(Math.random() * examples.length)]
+                },
+
+                clear() {
+                    this.text = ''
+                    this.result = null
+                    this.memoryResults = null
+                    this.error = null
                 }
             }
         }
