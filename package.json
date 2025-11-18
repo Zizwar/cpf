@@ -2,6 +2,18 @@
   "name": "cpf-vectorial",
   "author": "Brahim BIDI",
   "description": "manza, World!",
-  "main": "lite/wino.js"
-  
+  "main": "lite/wino.js",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:41006/git/Zizwar/cpf"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "dependencies": {
+    "mammoth": "^1.11.0"
+  }
 }
