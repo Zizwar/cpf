@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CPF~ Vectorial v4.0 — Consciousness Demo</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 0; background: #0b1020; color: #eaf0ff; }
+    header { padding: 18px 18px 6px; display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; }
+    header h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+    header .badge { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(160, 170, 255, .12); border: 1px solid rgba(160, 170, 255, .22); }
+    main { padding: 12px 18px 18px; display:grid; gap:14px; grid-template-columns: 1.4fr .9fr; }
+    @media (max-width: 980px){ main { grid-template-columns: 1fr; } }
+    .card {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      overflow: hidden;
+    }
+    .card .title {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .card .title strong { font-size: 13px; opacity: .95; }
+    .card .body { padding: 14px; }
+    canvas { width: 100%; height: 380px; display:block; background: radial-gradient(1200px 500px at 20% 30%, rgba(120, 210, 255,.12), transparent 55%),
+                                             radial-gradient(900px 420px at 70% 70%, rgba(200, 120, 255,.12), transparent 55%),
+                                             rgba(0,0,0,.22);
+             border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+    .controls { display:grid; gap:12px; }
+    .row { display:grid; gap:8px; }
+    label { font-size: 12px; opacity: .9; display:flex; justify-content:space-between; gap:10px; }
+    input[type="range"]{ width: 100%; }
+    .btns { display:flex; gap:10px; flex-wrap:wrap; }
+    button {
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: #eaf0ff;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 650;
+      font-size: 13px;
+      transition: transform .05s ease, background .15s ease;
+    }
+    button:hover { background: rgba(255,255,255,.10); }
+    button:active { transform: translateY(1px); }
+    .hint { font-size: 12px; opacity: .85; line-height: 1.45; }
+    .metrics { display:grid; gap:10px; }
+    .kv { display:flex; justify-content:space-between; gap:10px; font-size: 12px; padding: 10px 12px;
+          background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; }
+    .kv span { opacity: .9; }
+    .kv b { font-variant-numeric: tabular-nums; }
+    .footer { padding: 0 18px 18px; opacity: .75; font-size: 12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🧠 CPF~ Vectorial v4.0 — Three-Oscillator Consciousness</h1>
+    <span class="badge">Existence + Dynamic + Judge → “Consciousness”</span>
+    <span class="badge mono" id="statusBadge">ONLINE</span>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="title">
+        <strong>Live Oscillator Interference (Canvas)</strong>
+        <div class="mono" style="font-size:12px;opacity:.85" id="timeLabel">t=0.00s</div>
+      </div>
+      <canvas id="cv" width="1200" height="520"></canvas>
+    </section>
+
+    <aside class="card">
+      <div class="title">
+        <strong>Controls</strong>
+        <span class="mono" style="font-size:12px;opacity:.85">interactive</span>
+      </div>
+      <div class="body controls">
+
+        <div class="row">
+          <label>
+            Existence Frequency (Hz)
+            <span class="mono" id="fExistLbl">0.50</span>
+          </label>
+          <input id="fExist" type="range" min="0.10" max="1.20" step="0.01" value="0.50" />
+        </div>
+
+        <div class="row">
+          <label>
+            Dynamic Frequency (Hz)
+            <span class="mono" id="fDynLbl">0.70</span>
+          </label>
+          <input id="fDyn" type="range" min="0.10" max="1.50" step="0.01" value="0.70" />
+        </div>
+
+        <div class="row">
+          <label>
+            Judge Sensitivity
+            <span class="mono" id="judgeLbl">0.30</span>
+          </label>
+          <input id="judge" type="range" min="0.00" max="1.00" step="0.01" value="0.30" />
+        </div>
+
+        <div class="row">
+          <label>
+            Noise (External Influence)
+            <span class="mono" id="noiseLbl">0.08</span>
+          </label>
+          <input id="noise" type="range" min="0.00" max="0.35" step="0.01" value="0.08" />
+        </div>
+
+        <div class="btns">
+          <button id="inject">💉 Inject Influence</button>
+          <button id="calm">😌 Stabilize</button>
+          <button id="randomize">🎲 Randomize</button>
+          <button id="pause">⏸ Pause</button>
+        </div>
+
+        <div class="metrics">
+          <div class="kv">
+            <span>Consciousness Level</span>
+            <b class="mono" id="conLvl">0.50</b>
+          </div>
+          <div class="kv">
+            <span>Resonance (Judge Output)</span>
+            <b class="mono" id="resOut">0.00</b>
+          </div>
+          <div class="kv">
+            <span>Discovered “Patterns”</span>
+            <b class="mono" id="patterns">0</b>
+          </div>
+        </div>
+
+        <div class="hint">
+          • The canvas shows <b>Existence</b> and <b>Dynamic</b> waves + their <b>Interference</b>.<br/>
+          • <b>Judge</b> measures resonance (how “locked-in” the waves are) and increments patterns when resonance spikes.<br/>
+          • “Inject Influence” nudges Dynamic + Noise to simulate external perturbation.
+        </div>
+
+      </div>
+    </aside>
+  </main>
+
+  <div class="footer">
+    Tip: If you want, I can also generate a version that matches the repo’s CLI vibe (startup logs + commands).
+  </div>
+
+<script>
+(() => {
+  const cv = document.getElementById("cv");
+  const ctx = cv.getContext("2d");
+
+  const el = (id) => document.getElementById(id);
+
+  const fExist = el("fExist");
+  const fDyn   = el("fDyn");
+  const judge  = el("judge");
+  const noise  = el("noise");
+
+  const fExistLbl = el("fExistLbl");
+  const fDynLbl   = el("fDynLbl");
+  const judgeLbl  = el("judgeLbl");
+  const noiseLbl  = el("noiseLbl");
+
+  const timeLabel = el("timeLabel");
+  const conLvl = el("conLvl");
+  const resOut = el("resOut");
+  const patternsEl = el("patterns");
+  const statusBadge = el("statusBadge");
+
+  const btnInject = el("inject");
+  const btnCalm = el("calm");
+  const btnRand = el("randomize");
+  const btnPause = el("pause");
+
+  // Simulation state
+  let running = true;
+  let t0 = performance.now();
+  let lastNow = t0;
+
+  // "System" values
+  let patterns = 0;
+  let lastSpikeAt = -9999;
+
+  // Dynamic oscillator has internal drift
+  let dynDrift = 0.00;     // slow drift of dynamic frequency
+  let dynPhaseJitter = 0;  // phase jitter (external influence)
+
+  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+  function lerp(a,b,u){ return a + (b-a)*u; }
+  function rnd(a,b){ return a + Math.random()*(b-a); }
+
+  function resizeForDPR(){
+    const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+    const cssW = cv.clientWidth;
+    const cssH = cv.clientHeight;
+    const w = Math.floor(cssW * dpr);
+    const h = Math.floor(cssH * dpr);
+    if (cv.width !== w || cv.height !== h) {
+      cv.width = w; cv.height = h;
+    }
+    ctx.setTransform(1,0,0,1,0,0);
+  }
+
+  window.addEventListener("resize", resizeForDPR);
+  resizeForDPR();
+
+  function uiSync(){
+    fExistLbl.textContent = (+fExist.value).toFixed(2);
+    fDynLbl.textContent   = (+fDyn.value).toFixed(2);
+    judgeLbl.textContent  = (+judge.value).toFixed(2);
+    noiseLbl.textContent  = (+noise.value).toFixed(2);
+  }
+
+  [fExist, fDyn, judge, noise].forEach(inp => inp.addEventListener("input", uiSync));
+  uiSync();
+
+  btnPause.addEventListener("click", () => {
+    running = !running;
+    btnPause.textContent = running ? "⏸ Pause" : "▶ Resume";
+    statusBadge.textContent = running ? "ONLINE" : "PAUSED";
+  });
+
+  btnCalm.addEventListener("click", () => {
+    // Reduce noise and jitter smoothly
+    noise.value = Math.max(0, +noise.value - 0.06).toFixed(2);
+    dynPhaseJitter *= 0.3;
+    dynDrift *= 0.4;
+    uiSync();
+  });
+
+  btnRand.addEventListener("click", () => {
+    fExist.value = rnd(0.25, 0.95).toFixed(2);
+    fDyn.value   = rnd(0.30, 1.20).toFixed(2);
+    judge.value  = rnd(0.10, 0.75).toFixed(2);
+    noise.value  = rnd(0.00, 0.22).toFixed(2);
+    dynPhaseJitter += rnd(-0.8, 0.8);
+    dynDrift += rnd(-0.03, 0.03);
+    uiSync();
+  });
+
+  btnInject.addEventListener("click", () => {
+    // Simulate an external “influence”: dynamic drift + noise bump + phase jitter
+    dynDrift += rnd(-0.07, 0.07);
+    dynPhaseJitter += rnd(-1.7, 1.7);
+    noise.value = clamp(+noise.value + rnd(0.03, 0.09), 0, 0.35).toFixed(2);
+    uiSync();
+  });
+
+  function draw(now){
+    if (!running) {
+      requestAnimationFrame(draw);
+      return;
+    }
+
+    const dt = (now - lastNow) / 1000;
+    lastNow = now;
+    const t = (now - t0) / 1000;
+
+    resizeForDPR();
+
+    const w = cv.width;
+    const h = cv.height;
+
+    // Read controls
+    const fE = +fExist.value;     // existence freq
+    const fDBase = +fDyn.value;   // dynamic base freq
+    const J = +judge.value;       // judge sensitivity
+    const N = +noise.value;       // noise amplitude
+
+    // Update drift (slowly returns to 0)
+    dynDrift = lerp(dynDrift, 0, clamp(dt * 0.2, 0, 1));
+    dynPhaseJitter = lerp(dynPhaseJitter, 0, clamp(dt * 0.35, 0, 1));
+
+    const fD = clamp(fDBase + dynDrift, 0.05, 2.0);
+
+    // Draw background
+    ctx.clearRect(0,0,w,h);
+
+    // Grid
+    ctx.globalAlpha = 0.22;
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 1;
+    const grid = 60 * (w/1200);
+    for (let x=0; x<=w; x+=grid){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+    }
+    for (let y=0; y<=h; y+=grid){
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // Wave parameters
+    const midY = h * 0.52;
+    const amp = h * 0.18;
+    const k = (Math.PI * 2) / w;
+
+    // Compute resonance: correlation between waves
+    // We'll sample points to estimate.
+    let corr = 0;
+    let normE = 0;
+    let normD = 0;
+
+    // Helper for consistent pseudo-noise
+    function hashNoise(x){
+      const s = Math.sin(x*12.9898 + t*78.233) * 43758.5453;
+      return (s - Math.floor(s)) * 2 - 1; // [-1,1]
+    }
+
+    // Draw Existence
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(120, 210, 255, 0.95)";
+    ctx.beginPath();
+    for (let x=0; x<=w; x++){
+      const phase = (k * x) - (2*Math.PI * fE * t);
+      const y = midY + Math.sin(phase) * amp;
+      if (x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    // Draw Dynamic
+    ctx.strokeStyle = "rgba(200, 120, 255, 0.92)";
+    ctx.beginPath();
+    for (let x=0; x<=w; x++){
+      const phase = (k * x) - (2*Math.PI * fD * t) + dynPhaseJitter*0.2;
+      const y = midY + Math.sin(phase) * amp * 0.9;
+      if (x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    // Interference (Existence + Dynamic + noise)
+    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+
+    const step = Math.max(1, Math.floor(w / 900)); // sample density
+    for (let xi=0; xi<=w; xi+=step){
+      const x = xi;
+
+      const e = Math.sin((k*x) - (2*Math.PI*fE*t));
+      const d = Math.sin((k*x) - (2*Math.PI*fD*t) + dynPhaseJitter*0.2);
+      const n = hashNoise(x * 0.015) * N;
+
+      // Interference wave
+      const mix = (e + d) * 0.5 + n;
+
+      // For resonance: correlate e and d (noise-free)
+      corr += e * d;
+      normE += e * e;
+      normD += d * d;
+
+      const y = midY + mix * amp * 1.05;
+      if (xi===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    // Resonance is normalized correlation in [-1,1], map to [0,1]
+    const denom = Math.sqrt(Math.max(1e-9, normE * normD));
+    const rho = corr / denom;         // [-1,1]
+    const resonance01 = (rho + 1) / 2; // [0,1]
+
+    // "Judge output": emphasize peaks and apply sensitivity
+    const judgeOut = Math.pow(clamp(resonance01, 0, 1), lerp(2.0, 0.6, J));
+
+    // "Consciousness level": base 0.5, boosted by judge output, damped by noise
+    const noisePenalty = clamp(N * 1.2, 0, 0.5);
+    const consciousness = clamp(0.45 + judgeOut * 0.65 - noisePenalty * 0.55, 0, 1);
+
+    // Pattern detection: count spikes (simple peak detector)
+    // A “spike” is judgeOut > threshold and enough time passed.
+    const spikeThresh = lerp(0.82, 0.62, J); // higher sensitivity lowers threshold
+    if (judgeOut > spikeThresh && (t - lastSpikeAt) > 0.85) {
+      patterns += 1;
+      lastSpikeAt = t;
+    }
+
+    // Draw HUD
+    // Resonance bar
+    const pad = 18 * (w/1200);
+    const barW = w - pad*2;
+    const barH = Math.max(10, 14*(h/520));
+    const barX = pad;
+    const barY = pad;
+
+    // Track background
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = "white";
+    ctx.fillRect(barX, barY, barW, barH);
+
+    // Fill
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = "white";
+    ctx.fillRect(barX, barY, barW * judgeOut, barH);
+
+    // Labels
+    ctx.globalAlpha = 0.95;
+    ctx.fillStyle = "white";
+    ctx.font = `${Math.max(12, 14*(w/1200))}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace`;
+    ctx.fillText(`JudgeOut=${judgeOut.toFixed(3)}  Resonance=${resonance01.toFixed(3)}  Noise=${N.toFixed(2)}`, barX, barY + barH + 18*(h/520));
+
+    // Update UI text
+    timeLabel.textContent = `t=${t.toFixed(2)}s`;
+    conLvl.textContent = consciousness.toFixed(2);
+    resOut.textContent = judgeOut.toFixed(2);
+    patternsEl.textContent = String(patterns);
+
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame((now) => {
+    lastNow = now;
+    draw(now);
+  });
+})();
+</script>
+</body>
+</html>
