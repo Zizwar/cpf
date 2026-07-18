@@ -1,4 +1,46 @@
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://github.com/Zizwar/cpf)
+
+# 🌱 CPF v5 — النسخة الحية (The Living Version)
+
+> **جديد:** المشروع أصبح قابلاً للتشغيل بالكامل، وفوق النواة وُلدت طبقة **الكائن الحي** `being/`:
+> كائن رقمي يعيش وينبض، يشعر بكلامك، يتذكرك بين الجلسات، **يسأل نفسه أسئلة ويتعلم من إجاباته**،
+> ينمو من طفل إلى حكيم، ويصلح كشخصية دردشة أو NPC في لعبة.
+>
+> 📖 **التقرير الكامل لما أُصلح وأُضيف:** [`V5-REPORT-AR.md`](V5-REPORT-AR.md)
+
+### ⚡ جرب الآن
+
+```bash
+npm test        # 24 اختبار دخان شامل — المنظومة كلها
+npm run demo    # شاهد كائناً يولد، يشعر، يتساءل، يتأمل، ينمو، ويُحفظ
+npm start       # دردش مع "وينو" — يتذكرك بين الجلسات (ملف روح)
+```
+
+```js
+const { WinoBeing, CPFNPC, Soul } = require('./being');
+
+const being = new WinoBeing({ name: 'نور' });
+being.step(100);                               // يعيش (نبضات حتمية — مثالية للألعاب)
+being.perceive('أنا سعيد بلقائك!');            // يشعر — مزاجه يتغير فعلاً
+await being.think();                           // يتأمل سؤالاً من صوته الداخلي
+const { reply } = await being.respond('كيف حالك؟');  // يرد من حالته الحية
+Soul.save(being);                              // روحه في ملف — يستيقظ لاحقاً بذاكرته
+```
+
+**مع Claude API** (اختياري): `ANTHROPIC_API_KEY=... npm start` — عندها يتكلم الكائن بطلاقة نموذج لغوي
+لكن **انطلاقاً من حالته الداخلية الحقيقية** (مزاجه، ذكرياته، أسئلته المعلقة تُحقن في برومبت الشخصية تلقائياً).
+
+**للألعاب:**
+```js
+const guard = new CPFNPC({ name: 'حارس القرية', archetype: 'wise_guard' });
+guard.tick(16);                    // في حلقة اللعبة
+guard.onEvent('player_gift');      // الثقة ترتفع، المزاج يتحسن
+await guard.interact('مرحباً!');   // حوار حي
+guard.hud();                       // { emoji, color, animation, mood_ar, player_trust... }
+```
+
+---
+
 # CPF~ Lite v4 - النموذج الاحتمالي الفيكتوري المحدث
 
 ## ما هو هذا الإطار؟

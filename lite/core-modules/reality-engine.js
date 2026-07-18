@@ -165,10 +165,62 @@ class RealityEngine {
     }
 
     /**
+     * الواجهة الرئيسية للفضاء الموحد: تجسيد + تحقق من الواقع + معدِّل معرفي
+     * ترجع كائناً عادياً يحتوي reality_validation و cognitive_modifier
+     * (العقد الذي يعتمد عليه unified-cognitive-space.js)
+     */
+    async process_embodiment_and_validate(query, context = {}) {
+        const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, isFinite(v) ? v : (lo + hi) / 2));
+
+        let validation = {};
+        try {
+            validation = this.validate(query, context) || {};
+        } catch (error) {
+            console.warn('⚠️ Reality validation error:', error.message);
+        }
+
+        const rv = validation.reality_validation || {
+            anchor_strength: this.system_state?.reality_anchor_strength ?? 0.8,
+            anchor_stability: 0.7,
+            drift_risk: 0.2,
+            grounding_quality: 0.7
+        };
+        const meta = validation.meta_cognitive_status || {};
+        const raw_load = meta.cognitive_load;
+        const load = clamp(
+            typeof raw_load === 'object' && raw_load !== null
+                ? (raw_load.current_load ?? 0.5)
+                : (raw_load ?? 0.5),
+            0, 1
+        );
+
+        // اشتقاق المعدِّل المعرفي من صحة الاتصال بالواقع والحمل الذهني
+        const cognitive_modifier = {
+            processing_speed_modifier: clamp(1.2 - load * 0.4, 0.5, 1.5),
+            error_probability_modifier: clamp(
+                1.0 + (rv.drift_risk ?? 0.2) * 0.5 - (rv.anchor_strength ?? 0.7) * 0.3,
+                0.5, 2.0
+            ),
+            creativity_boost_modifier: clamp(
+                0.8 + (validation.processing_quality ?? 0.6) * 0.4,
+                0.5, 2.0
+            )
+        };
+
+        return {
+            reality_validation: rv,
+            cognitive_modifier,
+            safety_assessment: validation.safety_assessment || null,
+            system_coherence: validation.system_coherence ?? 0.7,
+            full_validation: validation
+        };
+    }
+
+    /**
      * Main validation function - ensures system remains grounded in reality
      */
     validate(query, context = {}) {
-        return this.webppl.infer(() => {
+        return this.webppl.realize(() => {
             // Assess reality anchor strength
             const anchor_assessment = this.assess_reality_anchors(query, context);
             
@@ -238,7 +290,7 @@ class RealityEngine {
      * Assess reality anchor strength and stability
      */
     assess_reality_anchors(query, context) {
-        return this.webppl.infer(() => {
+        return this.webppl.realize(() => {
             const anchor_evaluations = {};
             let overall_strength = 0;
             let total_weight = 0;
@@ -280,7 +332,7 @@ class RealityEngine {
      * Evaluate individual anchor type
      */
     evaluate_individual_anchor(anchor_type, config, query, context) {
-        return this.webppl.infer(() => {
+        return this.webppl.realize(() => {
             let strength = 0;
             let reliability = config.reliability;
             let availability = 0;
@@ -333,7 +385,7 @@ class RealityEngine {
      * Monitor meta-cognitive state
      */
     monitor_meta_cognitive_state(query, context) {
-        return this.webppl.infer(() => {
+        return this.webppl.realize(() => {
             // Assess current monitoring dimensions
             const dimension_assessments = this.assess_monitoring_dimensions(query, context);
             
@@ -370,35 +422,35 @@ class RealityEngine {
     assess_monitoring_dimensions(query, context) {
         const assessments = {};
         
-        assessments.cognitive_load = this.webppl.infer(() => ({
+        assessments.cognitive_load = this.webppl.realize(() => ({
             current_load: this.calculate_current_cognitive_load(query, context),
             capacity_utilization: this.calculate_capacity_utilization(context),
             overload_risk: this.assess_overload_risk(query, context),
             load_distribution: this.assess_load_distribution(query)
         }));
         
-        assessments.attention_allocation = this.webppl.infer(() => ({
+        assessments.attention_allocation = this.webppl.realize(() => ({
             focus_quality: this.assess_attention_focus_quality(query, context),
             resource_distribution: this.assess_attention_distribution(query),
             distraction_level: this.assess_distraction_level(context),
             allocation_efficiency: this.assess_allocation_efficiency(query, context)
         }));
         
-        assessments.process_efficiency = this.webppl.infer(() => ({
+        assessments.process_efficiency = this.webppl.realize(() => ({
             processing_speed: this.assess_processing_speed(query, context),
             accuracy_level: this.assess_processing_accuracy(query),
             resource_efficiency: this.assess_resource_efficiency(query, context),
             optimization_potential: this.assess_optimization_potential(query)
         }));
         
-        assessments.error_detection = this.webppl.infer(() => ({
+        assessments.error_detection = this.webppl.realize(() => ({
             error_sensitivity: this.assess_error_sensitivity(query),
             correction_speed: this.assess_correction_speed(context),
             error_types_monitored: this.identify_monitored_error_types(query),
             detection_accuracy: this.assess_detection_accuracy()
         }));
         
-        assessments.emotional_regulation = this.webppl.infer(() => ({
+        assessments.emotional_regulation = this.webppl.realize(() => ({
             regulation_effectiveness: this.assess_regulation_effectiveness(context),
             emotional_awareness: this.assess_emotional_awareness(context),
             regulation_strategies: this.assess_active_regulation_strategies(context),
@@ -412,7 +464,7 @@ class RealityEngine {
      * Check embodiment connection
      */
     check_embodiment_connection(context) {
-        return this.webppl.infer(() => {
+        return this.webppl.realize(() => {
             // Assess sensory integration
             const sensory_quality = this.assess_sensory_integration_quality(context);
             
@@ -446,7 +498,7 @@ class RealityEngine {
      * Evaluate safety conditions
      */
     evaluate_safety_conditions(anchor_assessment, meta_state, embodiment_status, query) {
-        return this.webppl.infer(() => {
+        return this.webppl.realize(() => {
             const risk_factors = [];
             const protective_factors = [];
             let safety_level = 1.0;
@@ -507,7 +559,7 @@ class RealityEngine {
      * Assess intervention requirements
      */
     assess_intervention_requirements(anchor_assessment, meta_state, safety_evaluation) {
-        return this.webppl.infer(() => {
+        return this.webppl.realize(() => {
             const required_interventions = [];
             
             // Reality grounding interventions
@@ -618,7 +670,7 @@ class RealityEngine {
      * Execute reality grounding intervention
      */
     execute_reality_grounding(intervention) {
-        return this.webppl.infer(() => {
+        return this.webppl.realize(() => {
             // Strengthen specified anchors
             const strengthening_results = [];
             
@@ -649,7 +701,7 @@ class RealityEngine {
      * Strengthen individual anchor
      */
     strengthen_anchor(anchor_type) {
-        return this.webppl.infer(() => {
+        return this.webppl.realize(() => {
             let effectiveness = 0;
             
             switch (anchor_type) {
@@ -695,7 +747,7 @@ class RealityEngine {
      * Execute cognitive load reduction
      */
     execute_load_reduction(intervention) {
-        return this.webppl.infer(() => {
+        return this.webppl.realize(() => {
             const optimization_results = [];
             
             for (const strategy of intervention.strategies) {
@@ -719,7 +771,7 @@ class RealityEngine {
      * Execute emergency grounding
      */
     execute_emergency_grounding(intervention) {
-        return this.webppl.infer(() => {
+        return this.webppl.realize(() => {
             // Immediate actions for emergency stabilization
             const emergency_actions = [];
             
@@ -812,12 +864,12 @@ class RealityEngine {
     }
 
     calculate_anchor_stability(anchor_evaluations) {
-        const stability_scores = Object.values(anchor_evaluations).map(eval => eval.stability_trend);
+        const stability_scores = Object.values(anchor_evaluations).map(anchor_eval => anchor_eval.stability_trend);
         return stability_scores.reduce((a, b) => a + b, 0) / stability_scores.length;
     }
 
     calculate_drift_risk(anchor_evaluations, overall_strength) {
-        const weak_anchors = Object.values(anchor_evaluations).filter(eval => eval.strength < 0.4);
+        const weak_anchors = Object.values(anchor_evaluations).filter(anchor_eval => anchor_eval.strength < 0.4);
         const drift_risk = (weak_anchors.length / Object.keys(anchor_evaluations).length) * 
                           (1 - overall_strength);
         

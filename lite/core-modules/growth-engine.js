@@ -122,11 +122,20 @@ class GrowthEngine {
      */
     stop() {
         if (!this.is_active) return;
-        
+
         clearInterval(this.growth_interval_id);
         this.is_active = false;
         this.growth_interval_id = null;
-        
+
+        // إلغاء مؤقتات الفترات الحرجة المعلقة (مع إعادة المعدل لوضعه الطبيعي)
+        if (this.critical_period_timers) {
+            for (const timer_id of this.critical_period_timers) {
+                clearTimeout(timer_id);
+                this.growth_engines.biological.base_growth_rate /= 2;
+            }
+            this.critical_period_timers.clear();
+        }
+
         console.log("🌙 Growth engine stopped");
     }
 
@@ -270,7 +279,7 @@ class GrowthEngine {
     /**
      * تسريع النمو (للاكتشافات المهمة)
      */
-    accelerate_growth(discovery_data) {
+    accelerate_growth(discovery_data = {}) {
         console.log(`🚀 Growth acceleration triggered by discovery: ${discovery_data.probably_id || 'unknown'}`);
         
         const bio = this.growth_engines.biological;
@@ -599,7 +608,18 @@ class GrowthEngine {
         if (this.unified_space.perceptual_cycle) {
             this.unified_space.perceptual_cycle.last_capacity_check = old_capacity;
         }
-        
+
+        // موجة البناء الفيكتوري: إعادة عرض المحتوى القديم بدقة أعلى
+        const cycle = this.unified_space.perceptual_cycle || this.unified_space.space?.perceptual_cycle;
+        if (cycle?.trigger_construction_wave) {
+            cycle.trigger_construction_wave(new_capacity, old_capacity);
+        }
+
+        // خطاف خارجي (يستخدمه wino.js لتحديث الدقة الفيكتورية)
+        if (typeof this.on_capacity_growth === 'function') {
+            try { this.on_capacity_growth(old_capacity, new_capacity); } catch (e) { /* لا يوقف النمو */ }
+        }
+
         console.log(`📢 Growth notification sent to all components`);
     }
 
@@ -770,17 +790,21 @@ class GrowthEngine {
 
     enter_critical_period(period_type, duration = 30000) {
         console.log(`⚡ Entering critical period: ${period_type} (${duration}ms)`);
-        
-        // زيادة مؤقتة في معدل النمو
-        const original_rate = this.growth_engines.biological.base_growth_rate;
-        this.growth_engines.biological.base_growth_rate *= 2;
-        
-        // العودة للمعدل الطبيعي بعد المدة المحددة
-        setTimeout(() => {
-            this.growth_engines.biological.base_growth_rate = original_rate;
+
+        // زيادة مؤقتة في معدل النمو بمضاعِف (وليس حفظ قيمة قديمة قد تصبح بائتة
+        // إذا تغير المعدل أثناء الفترة الحرجة بسبب انتقال مرحلة)
+        const BOOST = 2;
+        this.growth_engines.biological.base_growth_rate *= BOOST;
+
+        // تتبع المؤقت حتى يُلغى عند stop()
+        if (!this.critical_period_timers) this.critical_period_timers = new Set();
+        const timer_id = setTimeout(() => {
+            this.growth_engines.biological.base_growth_rate /= BOOST;
+            this.critical_period_timers.delete(timer_id);
             console.log(`⚡ Critical period ended: ${period_type}`);
         }, duration);
-        
+        this.critical_period_timers.add(timer_id);
+
         // تسجيل الفترة الحرجة
         this.growth_events.critical_periods.push({
             type: period_type,
@@ -788,6 +812,57 @@ class GrowthEngine {
             duration: duration,
             capacity_at_start: this.unified_space.capacity
         });
+    }
+
+    /**
+     * تسريع الزمن: محاكاة نمو عدة أيام دفعة واحدة
+     * (الواجهة الموثقة في README: growth_engine.biologicalGrowth(365))
+     *
+     * نمو مركب واقعي: كل يوم يزيد السعة بنسبة صغيرة تتأثر بمرحلة الحياة
+     * ومنحنى النضج والعوامل البيئية (~0.5-1% يومياً لطفل، أقل لبالغ).
+     */
+    biologicalGrowth(days = 1) {
+        const old_capacity = this.unified_space.capacity;
+        const simulated_days = Math.max(1, Math.min(3650, Math.floor(days)));
+
+        for (let day = 0; day < simulated_days; day++) {
+            const stage_info = this.growth_stages[this.current_stage];
+
+            // معدل النمو اليومي: الأساس × عامل المرحلة × النضج × البيئة
+            // (الأساس 0.0001/ثانية معايَر إلى يوم مضغوط بمعامل 86.4)
+            let daily_rate = this.growth_engines.biological.base_growth_rate * 86.4;
+            daily_rate *= stage_info.growth_rate;
+            daily_rate *= this.calculate_maturation_factor();
+            daily_rate *= this.calculate_environmental_multiplier();
+            daily_rate = Math.max(0.0002, Math.min(0.02, daily_rate)); // سقف واقعي: 2% يومياً
+
+            const day_old = this.unified_space.capacity;
+            const day_new = Math.floor(day_old * (1 + daily_rate));
+            if (day_new > day_old) {
+                this.unified_space.capacity = day_new;
+                this.record_growth_event('biological_fastforward', day_old, day_new, daily_rate);
+            }
+
+            // فحص انتقال المرحلة يومياً
+            this.check_stage_transition();
+        }
+
+        const new_capacity = this.unified_space.capacity;
+
+        // موجة بناء فيكتوري واحدة في نهاية التسريع (إعادة عرض المحتوى بالدقة الجديدة)
+        if (new_capacity > old_capacity) {
+            this.notify_growth_event(old_capacity, new_capacity);
+        }
+        this.update_growth_predictions();
+
+        console.log(`⏩ Fast-forwarded ${simulated_days} day(s): capacity ${old_capacity} → ${new_capacity}`);
+        return {
+            days_simulated: simulated_days,
+            old_capacity,
+            new_capacity,
+            growth_ratio: new_capacity / Math.max(1, old_capacity),
+            current_stage: this.current_stage
+        };
     }
 }
 

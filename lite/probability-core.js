@@ -11,13 +11,14 @@
 class ProbabilityCore {
     constructor(config = {}) {
         // Probabilistic distribution implementations
+        // ربط الدوال بـ this حتى تعمل عند استدعائها من السجل مباشرة
         this.distributions = {
-            uniform: this.createUniform,
-            gaussian: this.createGaussian,
-            beta: this.createBeta,
-            exponential: this.createExponential,
-            categorical: this.createCategorical,
-            dirichlet: this.createDirichlet
+            uniform: this.createUniform.bind(this),
+            gaussian: this.createGaussian.bind(this),
+            beta: this.createBeta.bind(this),
+            exponential: this.createExponential.bind(this),
+            categorical: this.createCategorical.bind(this),
+            dirichlet: this.createDirichlet.bind(this)
         };
         
         // Inference engine configuration
@@ -62,6 +63,20 @@ class ProbabilityCore {
             }
         } catch (error) {
             return this.handle_inference_error(error, program, options);
+        }
+    }
+
+    /**
+     * تنفيذ برنامج احتمالي مرة واحدة وإرجاع قيمته الفعلية مباشرة
+     * (بعكس infer الذي يرجع غلاف توزيع). كل استدعاء يعيد تشغيل البرنامج
+     * فتبقى النتيجة احتمالية متغيرة، لكن شكلها هو الكائن الحقيقي.
+     */
+    realize(program, fallback = null) {
+        try {
+            return program();
+        } catch (error) {
+            console.warn('Realize error:', error.message);
+            return fallback;
         }
     }
 
@@ -176,20 +191,22 @@ class ProbabilityCore {
     
     gaussian(mu, sigma) {
         // Box-Muller transform
+        // ملاحظة: القيمة الاحتياطية تُخزَّن كتوزيع معياري (بدون sigma)
+        // حتى لا تُضرب في sigma مرتين عند إعادة الاستخدام
         if (this.spare_gaussian !== undefined) {
             const result = this.spare_gaussian;
             this.spare_gaussian = undefined;
             return result * sigma + mu;
         }
-        
+
         const u1 = this.random();
         const u2 = this.random();
-        const mag = sigma * Math.sqrt(-2.0 * Math.log(u1));
+        const mag = Math.sqrt(-2.0 * Math.log(u1)); // standard normal magnitude
         const spare = mag * Math.cos(2.0 * Math.PI * u2);
         const result = mag * Math.sin(2.0 * Math.PI * u2);
-        
+
         this.spare_gaussian = spare;
-        return result + mu;
+        return result * sigma + mu;
     }
 
     // Beta distribution
@@ -609,6 +626,8 @@ class ProbabilityCore {
     setSeed(seed) {
         this.rng_state.seed = seed;
         this.rng_state.counter = 0;
+        // مسح القيمة الاحتياطية حتى تكون النتائج قابلة للتكرار فعلاً بعد إعادة البذر
+        this.spare_gaussian = undefined;
     }
 
     /**
@@ -617,15 +636,13 @@ class ProbabilityCore {
     
     handle_inference_error(error, program, options) {
         console.warn('Inference error:', error.message);
-        
-        // Return fallback distribution
-        return {
-            samples: [0.5], // Safe default
-            mean: 0.5,
-            variance: 0.1,
-            error: error.message,
-            fallback: true
-        };
+
+        // Return fallback distribution with the full distribution API
+        // حتى لا ينهار المستهلكون الذين يستدعون sample()/percentile()
+        const fallback = this.create_distribution_from_samples([0.5]);
+        fallback.error = error.message;
+        fallback.fallback = true;
+        return fallback;
     }
 
     /**

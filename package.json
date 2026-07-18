@@ -1,7 +1,23 @@
 {
   "name": "cpf-vectorial",
+  "version": "5.0.0-living",
+  "description": "CPF~ Cognitive Probabilistic Framework - living digital beings that grow, learn, ask themselves questions, and can serve as NPCs or chat companions",
+  "main": "being/index.js",
+  "scripts": {
+    "start": "node being/demo-chat.js",
+    "chat": "node being/demo-chat.js",
+    "demo": "node being/demo-life.js",
+    "life": "node being/demo-life.js",
+    "test": "node test/smoke.test.js"
+  },
+  "keywords": [
+    "cognitive-framework",
+    "artificial-life",
+    "npc",
+    "probabilistic",
+    "consciousness-simulation",
+    "cpf"
+  ],
   "author": "Brahim BIDI",
-  "description": "manza, World!",
-  "main": "lite/wino.js"
-  
+  "license": "MIT"
 }

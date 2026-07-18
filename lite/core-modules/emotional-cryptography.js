@@ -18,7 +18,7 @@ class EmotionalCryptography {
         this.crypto_settings = {
             base_precision: 8,                      // دقة التشفير الأساسية
             max_precision: 15,                      // أقصى دقة
-            similarity_threshold: 0.002,            // عتبة التشابه العاطفي
+            similarity_threshold: 0.005,            // عتبة التشابه العاطفي (المشاعر شبه المتطابقة ترن معاً)
             crypto_base: 0.5,                      // النقطة المحايدة
             mathematical_constants: {
                 golden_ratio: 1.618033988749895,
@@ -27,7 +27,56 @@ class EmotionalCryptography {
                 euler_fragments: 0.271828182845     // أجزاء من e
             }
         };
-        
+
+        // === معجم الأثر العاطفي (نموذج VAD: التكافؤ / الإثارة / الهيمنة) ===
+        // كل شعور معروف له بصمة VAD — والمشاعر المجهولة تعامل بشكل محايد (تكافؤ 0، إثارة 0.5)
+        this.affect_lexicon = {
+            joy:           { valence:  0.9,  arousal: 0.7,  dominance: 0.6  },
+            satisfaction:  { valence:  0.8,  arousal: 0.4,  dominance: 0.6  },
+            love:          { valence:  0.9,  arousal: 0.6,  dominance: 0.55 },
+            gratitude:     { valence:  0.8,  arousal: 0.4,  dominance: 0.55 },
+            hope:          { valence:  0.6,  arousal: 0.5,  dominance: 0.55 },
+            excitement:    { valence:  0.6,  arousal: 0.9,  dominance: 0.6  },
+            calmness:      { valence:  0.5,  arousal: 0.1,  dominance: 0.6  },
+            relaxation:    { valence:  0.6,  arousal: 0.15, dominance: 0.55 },
+            curiosity:     { valence:  0.5,  arousal: 0.6,  dominance: 0.55 },
+            insight:       { valence:  0.6,  arousal: 0.55, dominance: 0.6  },
+            understanding: { valence:  0.5,  arousal: 0.4,  dominance: 0.6  },
+            pride:         { valence:  0.7,  arousal: 0.6,  dominance: 0.75 },
+            confidence:    { valence:  0.6,  arousal: 0.5,  dominance: 0.8  },
+            control:       { valence:  0.3,  arousal: 0.4,  dominance: 0.85 },
+            energy:        { valence:  0.4,  arousal: 0.8,  dominance: 0.6  },
+            empathy:       { valence:  0.4,  arousal: 0.45, dominance: 0.5  },
+            surprise:      { valence:  0.1,  arousal: 0.9,  dominance: 0.45 },
+            nostalgia:     { valence:  0.2,  arousal: 0.35, dominance: 0.45 },
+            sadness:       { valence: -0.8,  arousal: 0.3,  dominance: 0.3  },
+            grief:         { valence: -0.85, arousal: 0.45, dominance: 0.25 },
+            anger:         { valence: -0.7,  arousal: 0.85, dominance: 0.6  },
+            fear:          { valence: -0.8,  arousal: 0.8,  dominance: 0.25 },
+            despair:       { valence: -0.9,  arousal: 0.4,  dominance: 0.15 },
+            anxiety:       { valence: -0.6,  arousal: 0.85, dominance: 0.3  },
+            craving:       { valence: -0.3,  arousal: 0.75, dominance: 0.35 },
+            guilt:         { valence: -0.6,  arousal: 0.5,  dominance: 0.3  },
+            shame:         { valence: -0.7,  arousal: 0.5,  dominance: 0.2  },
+            helplessness:  { valence: -0.7,  arousal: 0.4,  dominance: 0.1  },
+            boredom:       { valence: -0.3,  arousal: 0.15, dominance: 0.4  },
+            confusion:     { valence: -0.3,  arousal: 0.55, dominance: 0.35 },
+            tension:       { valence: -0.4,  arousal: 0.7,  dominance: 0.4  },
+            fatigue:       { valence: -0.3,  arousal: 0.2,  dominance: 0.3  },
+            embarrassment: { valence: -0.5,  arousal: 0.6,  dominance: 0.25 },
+            startle:       { valence: -0.2,  arousal: 0.9,  dominance: 0.3  },
+            loneliness:    { valence: -0.7,  arousal: 0.35, dominance: 0.25 },
+            frustration:   { valence: -0.6,  arousal: 0.75, dominance: 0.45 },
+            jealousy:      { valence: -0.6,  arousal: 0.7,  dominance: 0.4  },
+            disgust:       { valence: -0.7,  arousal: 0.6,  dominance: 0.5  }
+        };
+        this.neutral_affect = { valence: 0, arousal: 0.5, dominance: 0.5 };
+
+        // مفاتيح رقمية ليست مشاعر (لا تدخل في حسابات VAD)
+        this.non_emotion_keys = new Set([
+            'duration', 'context_novelty', 'personal_meaning', 'suppressed', 'amplified'
+        ]);
+
         // === معرفات احتمالية (Probably IDs) ===
         this.probably_ids = new Map();              // المعرفات العاطفية
         this.crypto_signatures = new Map();         // التوقيعات المشفرة
@@ -80,6 +129,9 @@ class EmotionalCryptography {
             average_encryption_complexity: 0.0
         };
         
+        // حالة آخر تشفير: هل رنّ مع توقيع موجود؟
+        this.last_encryption_resonated = false;
+
         // تهيئة النظام
         this.initialize_encryption_system();
     }
@@ -88,6 +140,12 @@ class EmotionalCryptography {
      * تشفير تجربة عاطفية إلى توقيع رقمي
      */
     encrypt_emotion(emotional_experience, context = {}) {
+        // حماية المدخلات: أي كائن مسطح من حقول عاطفية رقمية مقبول — ولا نرمي استثناء أبداً
+        if (!emotional_experience || typeof emotional_experience !== 'object') {
+            emotional_experience = {};
+        }
+        context = (context && typeof context === 'object') ? context : {};
+
         this.metrics.total_encryptions++;
         
         console.log("🔐 Encrypting emotional experience...");
@@ -113,7 +171,10 @@ class EmotionalCryptography {
         const encryption_result = {
             crypto_score: enhanced_signature.final_score,
             probably_id: probably_id,
-            emotional_signature: enhanced_signature,
+            signature: enhanced_signature,
+            components: emotional_components,
+            resonated_with_existing: this.last_encryption_resonated,
+            emotional_signature: enhanced_signature,        // اسم قديم محفوظ للتوافق
             encryption_metadata: {
                 precision_used: this.crypto_settings.base_precision,
                 pattern_type: enhanced_signature.pattern_type,
@@ -171,27 +232,27 @@ class EmotionalCryptography {
      * حساب الطيف العاطفي الشامل
      */
     calculate_emotional_spectrum(components) {
-        return this.webppl.infer(() => {
-            // الطيف الأساسي
-            const base_spectrum = {
-                primary_frequency: components.valence * 0.5 + 0.25,  // 0.25 - 0.75
-                secondary_frequency: components.arousal * 0.3 + 0.1, // 0.1 - 0.4
-                harmonic_content: this.calculate_harmonic_content(components),
-                
-                // طبقات الطيف
-                emotional_layers: {
-                    surface: components.valence * components.arousal,
-                    deep: components.dominance * components.authenticity,
-                    core: components.intensity * components.uniqueness_factor
-                },
-                
-                // تفاعلات غير خطية
-                resonance_patterns: this.find_resonance_patterns(components),
-                interference_patterns: this.find_interference_patterns(components)
-            };
-            
-            return base_spectrum;
-        });
+        // ملاحظة: infer() تُرجع غلاف توزيع {samples, mean, ...} وليس قيمة البرنامج،
+        // لذلك نحسب الطيف مباشرة مع ضجيج غاوسي مجهري كنكهة احتمالية
+        const base_spectrum = {
+            primary_frequency: components.valence * 0.5 + 0.25,  // 0.25 - 0.75
+            secondary_frequency: components.arousal * 0.3 + 0.1, // 0.1 - 0.4
+            harmonic_content: Math.max(0, Math.min(1,
+                this.calculate_harmonic_content(components) + this.webppl.gaussian(0, 0.01))),
+
+            // طبقات الطيف
+            emotional_layers: {
+                surface: components.valence * components.arousal,
+                deep: components.dominance * components.authenticity,
+                core: components.intensity * components.uniqueness_factor
+            },
+
+            // تفاعلات غير خطية
+            resonance_patterns: this.find_resonance_patterns(components),
+            interference_patterns: this.find_interference_patterns(components)
+        };
+
+        return base_spectrum;
     }
 
     /**
@@ -200,39 +261,44 @@ class EmotionalCryptography {
     apply_mathematical_encryption(spectrum, context) {
         const crypto_base = this.crypto_settings.crypto_base;
         const constants = this.crypto_settings.mathematical_constants;
-        
-        return this.webppl.infer(() => {
-            // التشفير الأساسي
-            let crypto_value = crypto_base;
-            
-            // إضافة مكونات الطيف
-            crypto_value += spectrum.primary_frequency * constants.golden_ratio * 0.1;
-            crypto_value += spectrum.secondary_frequency * constants.fibonacci_base * 0.1;
-            crypto_value += spectrum.harmonic_content * constants.pi_fragments * 0.05;
-            
-            // طبقات التشفير
-            const layers = spectrum.emotional_layers;
-            crypto_value += layers.surface * 0.123456789;      // نمط متكرر
-            crypto_value += layers.deep * constants.euler_fragments;
-            crypto_value += layers.core * 0.0618033988;        // النسبة الذهبية المعكوسة
-            
-            // أنماط الرنين والتداخل
-            crypto_value += this.encode_resonance_patterns(spectrum.resonance_patterns);
-            crypto_value += this.encode_interference_patterns(spectrum.interference_patterns);
-            
-            // تطبيق السياق
-            if (context.temporal_context) {
-                crypto_value += this.encode_temporal_context(context.temporal_context);
-            }
-            
-            if (context.social_context) {
-                crypto_value += this.encode_social_context(context.social_context);
-            }
-            
-            // تطبيق دقة التشفير
-            const precision = this.crypto_settings.base_precision;
-            return parseFloat(crypto_value.toFixed(precision));
-        });
+
+        // التشفير الأساسي — حساب مباشر (وليس عبر infer التي تُرجع غلاف توزيع بدل الرقم)
+        let crypto_value = crypto_base;
+
+        // إضافة مكونات الطيف
+        crypto_value += spectrum.primary_frequency * constants.golden_ratio * 0.1;
+        crypto_value += spectrum.secondary_frequency * constants.fibonacci_base * 0.1;
+        crypto_value += spectrum.harmonic_content * constants.pi_fragments * 0.05;
+
+        // طبقات التشفير
+        const layers = spectrum.emotional_layers;
+        crypto_value += layers.surface * 0.123456789;      // نمط متكرر
+        crypto_value += layers.deep * constants.euler_fragments;
+        crypto_value += layers.core * 0.0618033988;        // النسبة الذهبية المعكوسة
+
+        // أنماط الرنين والتداخل
+        crypto_value += this.encode_resonance_patterns(spectrum.resonance_patterns);
+        crypto_value += this.encode_interference_patterns(spectrum.interference_patterns);
+
+        // تطبيق السياق
+        if (context.temporal_context) {
+            crypto_value += this.encode_temporal_context(context.temporal_context);
+        }
+
+        if (context.social_context) {
+            crypto_value += this.encode_social_context(context.social_context);
+        }
+
+        // نكهة احتمالية مجهرية — صغيرة بما يكفي حتى لا تكسر رنين التجارب المتشابهة
+        crypto_value += this.webppl.gaussian(0, 0.01) * 0.05;
+
+        // ضغط ناعم بدالة tanh رتيبة: يضمن بقاء التوقيع داخل المجال (0, 1) مع حفظ الترتيب
+        if (!Number.isFinite(crypto_value)) crypto_value = crypto_base;
+        crypto_value = 0.5 + Math.tanh((crypto_value - 0.5) * 1.5) * 0.47;
+
+        // تطبيق دقة التشفير
+        const precision = this.crypto_settings.base_precision;
+        return parseFloat(crypto_value.toFixed(precision));
     }
 
     /**
@@ -299,6 +365,9 @@ class EmotionalCryptography {
                 console.log(`🎭 Emotional resonance detected!`);
                 console.log(`   Matching Probably ID: ${existing_id}`);
                 console.log(`   Similarity: ${(similarity * 100).toFixed(2)}%`);
+
+                this.last_encryption_resonated = true;
+                this.metrics.resonance_discoveries++;
                 
                 // تحديث البيانات الموجودة
                 existing_data.occurrence_count++;
@@ -321,6 +390,7 @@ class EmotionalCryptography {
         }
         
         // إنشاء معرف احتمالي جديد
+        this.last_encryption_resonated = false;
         const new_probably_id = this.generate_new_probably_id(signature, components);
         
         this.probably_ids.set(new_probably_id, {
@@ -373,39 +443,42 @@ class EmotionalCryptography {
             if (overall_similarity > (1 - tolerance)) {
                 matching_memories.push({
                     probably_id: probably_id,
-                    emotional_resonance: overall_similarity,
+                    similarity: overall_similarity,
+                    signature_data: {
+                        crypto_score: emotional_data.crypto_score,
+                        components: emotional_data.components,
+                        signature: emotional_data.signature,
+                        confidence: emotional_data.confidence_score,
+                        occurrence_count: emotional_data.occurrence_count,
+                        associated_memories: emotional_data.associated_memories,
+                        resonance_network: Array.from(emotional_data.resonance_network)
+                    },
                     signature_similarity: signature_similarity,
-                    intensity_match: intensity_match,
-                    crypto_score: emotional_data.crypto_score,
-                    components: emotional_data.components,
-                    associated_memories: emotional_data.associated_memories,
-                    confidence: emotional_data.confidence_score,
-                    occurrence_count: emotional_data.occurrence_count,
-                    resonance_network: Array.from(emotional_data.resonance_network)
+                    intensity_match: intensity_match
                 });
             }
         }
-        
+
         // ترتيب حسب قوة الرنين العاطفي
-        matching_memories.sort((a, b) => b.emotional_resonance - a.emotional_resonance);
-        
+        matching_memories.sort((a, b) => b.similarity - a.similarity);
+
         // تحديد شبكات الرنين
         const resonance_networks = this.discover_resonance_networks(matching_memories);
-        
-        const results = {
-            matches: matching_memories.slice(0, max_results),
-            resonance_networks: resonance_networks,
-            search_metadata: {
-                target_signature: target_crypto_score,
-                total_matches: matching_memories.length,
-                tolerance_used: tolerance,
-                search_timestamp: Date.now()
-            }
+
+        // النتيجة مصفوفة من {probably_id, similarity, signature_data}
+        // مع بيانات وصفية إضافية ملحقة بالمصفوفة نفسها
+        const results = matching_memories.slice(0, max_results);
+        results.resonance_networks = resonance_networks;
+        results.search_metadata = {
+            target_signature: target_crypto_score,
+            total_matches: matching_memories.length,
+            tolerance_used: tolerance,
+            search_timestamp: Date.now()
         };
-        
+
         console.log(`📋 Found ${matching_memories.length} emotional matches`);
-        console.log(`   Top match resonance: ${matching_memories[0]?.emotional_resonance.toFixed(3) || 'N/A'}`);
-        
+        console.log(`   Top match resonance: ${results[0] ? results[0].similarity.toFixed(3) : 'N/A'}`);
+
         return results;
     }
 
@@ -472,9 +545,10 @@ class EmotionalCryptography {
         network.connections.sort((a, b) => b.resonance_strength - a.resonance_strength);
         network.connections = network.connections.slice(0, max_connections);
         
-        // حساب قوة الشبكة الإجمالية
-        network.resonance_strength = network.connections.reduce((sum, conn) => 
-            sum + conn.resonance_strength, 0) / network.connections.length;
+        // حساب قوة الشبكة الإجمالية (مع حماية من القسمة على صفر)
+        network.resonance_strength = network.connections.length > 0 ?
+            network.connections.reduce((sum, conn) =>
+                sum + conn.resonance_strength, 0) / network.connections.length : 0;
         
         network.network_coherence = this.calculate_network_coherence(network.connections);
         
@@ -491,28 +565,49 @@ class EmotionalCryptography {
 
     // =================== Helper Methods - التحليل والحساب ===================
 
+    get_affect_profile(emotion_name) {
+        // بصمة VAD للشعور — المشاعر المجهولة تعامل بشكل محايد (تكافؤ 0، إثارة 0.5)
+        return this.affect_lexicon[emotion_name] || this.neutral_affect;
+    }
+
+    extract_emotion_entries(experience) {
+        // استخراج أزواج (اسم الشعور، الشدة) الرقمية الصالحة فقط
+        return Object.entries(experience).filter(([name, value]) =>
+            typeof value === 'number' && Number.isFinite(value) && !this.non_emotion_keys.has(name)
+        );
+    }
+
     calculate_valence(experience) {
-        // حساب القطبية العاطفية (إيجابي/سلبي)
-        const positive = (experience.joy || 0) + (experience.satisfaction || 0) + (experience.love || 0);
-        const negative = (experience.sadness || 0) + (experience.anger || 0) + (experience.fear || 0);
-        
-        return Math.max(-1, Math.min(1, positive - negative));
+        // حساب القطبية العاطفية (إيجابي/سلبي) كمتوسط مرجح عبر معجم VAD
+        let weighted = 0, total = 0;
+        for (const [name, value] of this.extract_emotion_entries(experience)) {
+            const magnitude = Math.min(1, Math.abs(value));
+            weighted += this.get_affect_profile(name).valence * magnitude;
+            total += magnitude;
+        }
+        return total > 0 ? Math.max(-1, Math.min(1, weighted / total)) : 0;
     }
 
     calculate_arousal(experience) {
-        // حساب مستوى الإثارة/التفعيل
-        const high_arousal = (experience.excitement || 0) + (experience.anger || 0) + (experience.fear || 0);
-        const low_arousal = (experience.calmness || 0) + (experience.boredom || 0);
-        
-        return Math.max(0, Math.min(1, high_arousal - low_arousal * 0.5 + 0.5));
+        // حساب مستوى الإثارة/التفعيل كمتوسط مرجح عبر معجم VAD
+        let weighted = 0, total = 0;
+        for (const [name, value] of this.extract_emotion_entries(experience)) {
+            const magnitude = Math.min(1, Math.abs(value));
+            weighted += this.get_affect_profile(name).arousal * magnitude;
+            total += magnitude;
+        }
+        return total > 0 ? Math.max(0, Math.min(1, weighted / total)) : 0.5;
     }
 
     calculate_dominance(experience) {
-        // حساب الشعور بالسيطرة/القوة
-        const dominant = (experience.confidence || 0) + (experience.pride || 0) + (experience.control || 0);
-        const submissive = (experience.helplessness || 0) + (experience.shame || 0);
-        
-        return Math.max(0, Math.min(1, dominant - submissive + 0.5));
+        // حساب الشعور بالسيطرة/القوة كمتوسط مرجح عبر معجم VAD
+        let weighted = 0, total = 0;
+        for (const [name, value] of this.extract_emotion_entries(experience)) {
+            const magnitude = Math.min(1, Math.abs(value));
+            weighted += this.get_affect_profile(name).dominance * magnitude;
+            total += magnitude;
+        }
+        return total > 0 ? Math.max(0, Math.min(1, weighted / total)) : 0.5;
     }
 
     calculate_emotional_complexity(experience) {
@@ -527,6 +622,31 @@ class EmotionalCryptography {
         return Math.min(1, (emotion_count / 10) + intensity_variance + mixed_emotions);
     }
 
+    calculate_intensity_variance(experience) {
+        // تباين شدة المشاعر — مقياس لتشتت التجربة العاطفية
+        const values = this.extract_emotion_entries(experience)
+            .map(([, value]) => Math.min(1, Math.abs(value)));
+        if (values.length === 0) return 0;
+
+        const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+        return values.reduce((sum, val) => sum + (val - mean) * (val - mean), 0) / values.length;
+    }
+
+    detect_mixed_emotions(experience) {
+        // مشاعر مختلطة: حضور شعور إيجابي التكافؤ وآخر سلبي التكافؤ فوق 0.3 معاً
+        let has_positive = false;
+        let has_negative = false;
+
+        for (const [name, value] of this.extract_emotion_entries(experience)) {
+            if (value <= 0.3) continue;
+            const affect = this.get_affect_profile(name);
+            if (affect.valence > 0.2) has_positive = true;
+            if (affect.valence < -0.2) has_negative = true;
+        }
+
+        return (has_positive && has_negative) ? 0.25 : 0;
+    }
+
     calculate_authenticity(experience) {
         // تقدير مدى أصالة التجربة العاطفية (مقابل المصطنعة)
         if (experience.artificial_source) return 0.1;
@@ -537,9 +657,10 @@ class EmotionalCryptography {
     }
 
     calculate_intensity(experience) {
-        // حساب الشدة الإجمالية
-        const all_values = Object.values(experience).filter(val => typeof val === 'number');
-        return all_values.length > 0 ? 
+        // حساب الشدة الإجمالية (جذر متوسط المربعات لشدات المشاعر)
+        const all_values = this.extract_emotion_entries(experience)
+            .map(([, value]) => Math.min(1, Math.abs(value)));
+        return all_values.length > 0 ?
             Math.sqrt(all_values.reduce((sum, val) => sum + val * val, 0) / all_values.length) : 0;
     }
 
@@ -576,17 +697,138 @@ class EmotionalCryptography {
     }
 
     calculate_uniqueness_factor(experience) {
-        // حساب عامل التفرد
-        return this.webppl.infer(() => {
-            const randomness = this.webppl.uniform(0.1, 0.9);
-            const context_uniqueness = experience.context_novelty || 0.5;
-            const personal_significance = experience.personal_meaning || 0.5;
-            
-            return (randomness + context_uniqueness + personal_significance) / 3;
+        // حساب عامل التفرد — بصمة حتمية مشتقة من بنية التجربة نفسها
+        // (العشوائية الصرفة كانت تكسر رنين التجارب المتطابقة، وinfer تُرجع غلاف توزيع)
+        const sorted_keys = Object.keys(experience).sort();
+        let name_hash = 0;
+        for (const key of sorted_keys) {
+            for (let i = 0; i < key.length; i++) {
+                name_hash = (name_hash * 31 + key.charCodeAt(i)) % 997;
+            }
+        }
+
+        const numeric_values = this.extract_emotion_entries(experience)
+            .map(([, value]) => Math.min(1, Math.abs(value)));
+        const value_mass = numeric_values.length > 0 ?
+            numeric_values.reduce((sum, val) => sum + val, 0) / numeric_values.length : 0.5;
+
+        const structural_uniqueness = 0.1 + (name_hash / 997) * 0.5 + value_mass * 0.3;
+        const context_uniqueness = experience.context_novelty || 0.5;
+        const personal_significance = experience.personal_meaning || 0.5;
+
+        const uniqueness = (structural_uniqueness + context_uniqueness + personal_significance) / 3
+            + this.webppl.gaussian(0, 0.01);
+        return Math.max(0, Math.min(1, uniqueness));
+    }
+
+    // =================== Spectrum Helpers - مساعدات الطيف ===================
+
+    calculate_harmonic_content(components) {
+        // المحتوى التوافقي: تراكب الأبعاد العاطفية كمتسلسلة توافقية (1 + 1/2 + 1/3 ...)
+        const dimensions = [
+            components.valence * 0.5 + 0.5,   // تطبيع التكافؤ إلى [0, 1]
+            components.arousal,
+            components.dominance,
+            components.complexity,
+            components.intensity
+        ];
+
+        let harmonic_sum = 0;
+        dimensions.forEach((dimension, index) => {
+            harmonic_sum += dimension / (index + 1);
         });
+
+        return Math.max(0, Math.min(1, harmonic_sum / 2.283333)); // القسمة على مجموع 1..1/5
+    }
+
+    find_resonance_patterns(components) {
+        // أنماط الرنين: أزواج الأبعاد التي تتعزز عندما تتقارب قيمها
+        const patterns = [];
+        const normalized_valence = components.valence * 0.5 + 0.5;
+        const candidate_pairs = [
+            ['valence_arousal_resonance', normalized_valence, components.arousal],
+            ['dominance_intensity_resonance', components.dominance, components.intensity],
+            ['complexity_authenticity_resonance', components.complexity, components.authenticity]
+        ];
+
+        for (const [pattern_name, first, second] of candidate_pairs) {
+            const alignment = 1 - Math.abs(first - second);
+            if (alignment > 0.6) {
+                patterns.push({
+                    pattern: pattern_name,
+                    strength: alignment * ((first + second) / 2)
+                });
+            }
+        }
+
+        return patterns;
+    }
+
+    find_interference_patterns(components) {
+        // أنماط التداخل: أبعاد في حالة توتر تخفض صفاء التوقيع
+        const patterns = [];
+        const normalized_valence = components.valence * 0.5 + 0.5;
+
+        if (components.arousal > 0.6 && components.dominance < 0.4) {
+            patterns.push({
+                pattern: 'arousal_dominance_conflict',
+                strength: components.arousal - components.dominance
+            });
+        }
+        if (normalized_valence < 0.4 && components.intensity > 0.6) {
+            patterns.push({
+                pattern: 'negative_intensity_turbulence',
+                strength: components.intensity * (0.4 - normalized_valence)
+            });
+        }
+        if (components.social_component > 0.5 && components.cognitive_component > 0.5) {
+            patterns.push({
+                pattern: 'social_cognitive_interference',
+                strength: (components.social_component + components.cognitive_component) / 2 - 0.5
+            });
+        }
+
+        return patterns;
+    }
+
+    encode_resonance_patterns(patterns) {
+        // ترميز أنماط الرنين كإزاحة موجبة صغيرة على أساس فيبوناتشي
+        const fibonacci_base = this.crypto_settings.mathematical_constants.fibonacci_base;
+        return patterns.reduce((sum, pattern) => sum + pattern.strength * fibonacci_base * 0.1, 0);
+    }
+
+    encode_interference_patterns(patterns) {
+        // ترميز أنماط التداخل كإزاحة سالبة صغيرة على أساس أجزاء π
+        const pi_fragments = this.crypto_settings.mathematical_constants.pi_fragments;
+        return -patterns.reduce((sum, pattern) => sum + pattern.strength * pi_fragments * 0.1, 0);
+    }
+
+    encode_temporal_context(temporal_context) {
+        // ترميز السياق الزمني (وقت اليوم أو أي مقياس زمني معياري) كإزاحة دقيقة
+        const raw = typeof temporal_context === 'number' ?
+            temporal_context : (temporal_context.time_of_day || 0.5);
+        const normalized = Math.max(0, Math.min(1, raw));
+        return (normalized - 0.5) * this.crypto_settings.mathematical_constants.euler_fragments * 0.05;
+    }
+
+    encode_social_context(social_context) {
+        // ترميز السياق الاجتماعي (الحضور/الألفة الاجتماعية) كإزاحة دقيقة بالنسبة الذهبية
+        const raw = typeof social_context === 'number' ?
+            social_context : (social_context.social_presence || social_context.intimacy || 0.5);
+        const normalized = Math.max(0, Math.min(1, raw));
+        return (normalized - 0.5) * this.crypto_settings.mathematical_constants.golden_ratio * 0.01;
     }
 
     // =================== Enhancement Methods - طرق التحسين ===================
+
+    determine_enhancement_pattern(complexity_level) {
+        // اختيار نمط التحسين وفق طبقات التعقيد: بسيط → متسامٍ
+        if (complexity_level < 0.25) return 'linear_baseline';
+        if (complexity_level < 0.5) return 'fibonacci_enhancement';
+        if (complexity_level < 0.75) return 'golden_ratio_enhancement';
+        if (complexity_level < 0.9) return 'harmonic_series_enhancement';
+        return 'transcendent_enhancement';
+    }
 
     apply_fibonacci_enhancement(base_score) {
         const fib_sequence = "1123581321345589"; // أول أرقام فيبوناتشي
@@ -695,6 +937,82 @@ class EmotionalCryptography {
         return sequences.some(seq => decimal_str.includes(seq));
     }
 
+    discover_mathematical_patterns_in_signature(crypto_score) {
+        // الأنماط الرياضية الكامنة في التمدد العشري للتوقيع
+        return this.discover_hidden_mathematical_patterns(crypto_score).map(pattern => ({
+            pattern: pattern,
+            source: 'decimal_expansion',
+            crypto_score: crypto_score
+        }));
+    }
+
+    discover_temporal_patterns(emotional_data) {
+        // الأنماط الزمنية: التكرار والحداثة ودورة حياة الشعور
+        const lifespan_ms = emotional_data.last_experienced - emotional_data.first_experienced;
+        const occurrences = emotional_data.occurrence_count || 1;
+
+        return {
+            is_recurring: occurrences > 1,
+            occurrence_count: occurrences,
+            lifespan_ms: lifespan_ms,
+            average_interval_ms: occurrences > 1 ? lifespan_ms / (occurrences - 1) : 0,
+            recency: Math.exp(-(Date.now() - emotional_data.last_experienced) / (24 * 3600 * 1000))
+        };
+    }
+
+    discover_signature_resonance_patterns(emotional_data) {
+        // أنماط رنين التوقيع: انحراف التنويعات عن التوقيع الأصلي واستقراره
+        const variations = emotional_data.signature_variations || [];
+        const base_score = emotional_data.crypto_score;
+        const average_drift = variations.length > 0 ?
+            variations.reduce((sum, variation) =>
+                sum + Math.abs(variation.crypto_score - base_score), 0) / variations.length : 0;
+
+        return {
+            variation_count: variations.length,
+            average_drift: average_drift,
+            stability: Math.max(0, Math.min(1, 1 - average_drift * 20)),
+            network_size: emotional_data.resonance_network ? emotional_data.resonance_network.size : 0
+        };
+    }
+
+    discover_evolution_patterns(emotional_data) {
+        // أنماط التطور: نضج التوقيع مع تكرار المعايشة ونمو الثقة
+        const maturity = Math.min(1, (emotional_data.occurrence_count || 1) / 10);
+        const evolution_stage = maturity < 0.3 ? 'nascent' :
+            maturity < 0.7 ? 'developing' : 'established';
+
+        return {
+            maturity: maturity,
+            confidence_growth: emotional_data.confidence_score - 0.3, // 0.3 هي ثقة الميلاد
+            variation_richness: Math.min(1, (emotional_data.signature_variations || []).length / 5),
+            evolution_stage: evolution_stage
+        };
+    }
+
+    discover_resonance_networks(matching_memories) {
+        // اكتشاف شبكات الرنين: أزواج الذكريات المتطابقة ذات العلاقات التوافقية
+        const networks = [];
+
+        for (let i = 0; i < matching_memories.length; i++) {
+            for (let j = i + 1; j < matching_memories.length; j++) {
+                const resonance = this.calculate_harmonic_resonance(
+                    matching_memories[i].signature_data.crypto_score,
+                    matching_memories[j].signature_data.crypto_score
+                );
+
+                if (resonance > 0.85) {
+                    networks.push({
+                        nodes: [matching_memories[i].probably_id, matching_memories[j].probably_id],
+                        harmonic_resonance: resonance
+                    });
+                }
+            }
+        }
+
+        return networks;
+    }
+
     // =================== Similarity and Resonance Methods ===================
 
     calculate_emotional_similarity(crypto1, crypto2, components1, components2) {
@@ -759,8 +1077,80 @@ class EmotionalCryptography {
             const resonance = 1 - Math.abs(ratio - harmonic) / harmonic;
             max_resonance = Math.max(max_resonance, resonance);
         }
-        
+
         return Math.max(0, max_resonance);
+    }
+
+    calculate_pattern_similarity(crypto1, crypto2) {
+        // تشابه الأنماط: قرب التوقيعين في الفضاء الرقمي مع لمسة توافقية
+        const proximity = Math.max(0, 1 - Math.abs(crypto1 - crypto2) * 2);
+        const harmonic_affinity = this.calculate_harmonic_resonance(crypto1, crypto2);
+        return proximity * 0.7 + harmonic_affinity * 0.3;
+    }
+
+    calculate_component_resonance(comp1, comp2) {
+        // رنين المكونات: تقارب الأبعاد الجوهرية الثلاثة (VAD)
+        const vad_keys = ['valence', 'arousal', 'dominance'];
+        let resonance_sum = 0;
+
+        for (const key of vad_keys) {
+            resonance_sum += 1 - Math.abs((comp1[key] || 0) - (comp2[key] || 0)) / 2;
+        }
+
+        return Math.max(0, Math.min(1, resonance_sum / vad_keys.length));
+    }
+
+    calculate_temporal_resonance(time1, time2) {
+        // الرنين الزمني: التجارب المتقاربة زمنياً ترن أقوى (تلاشٍ أسي على مدى يوم)
+        const gap_hours = Math.abs(time1 - time2) / 3600000;
+        return Math.exp(-gap_hours / 24);
+    }
+
+    classify_connection_type(data1, data2) {
+        // تصنيف نوع الاتصال بين توقيعين عاطفيين
+        const valence_gap = Math.abs(data1.components.valence - data2.components.valence);
+        const arousal_gap = Math.abs(data1.components.arousal - data2.components.arousal);
+
+        if (valence_gap < 0.3 && arousal_gap < 0.3) return 'kindred_resonance';
+        if (data1.components.valence * data2.components.valence < -0.05) return 'complementary_opposition';
+        if (arousal_gap < 0.2) return 'arousal_alignment';
+        return 'ambient_association';
+    }
+
+    find_harmonic_relationship(score1, score2) {
+        // البحث عن أقرب علاقة توافقية موسيقية/ذهبية بين توقيعين
+        const ratio = score2 !== 0 ? score1 / score2 : Infinity;
+        const relationships = [
+            { name: 'unison', value: 1 },
+            { name: 'octave', value: 2 },
+            { name: 'perfect_fifth', value: 1.5 },
+            { name: 'golden_ratio', value: this.crypto_settings.mathematical_constants.golden_ratio },
+            { name: 'inverse_golden', value: 0.618033988749895 },
+            { name: 'sub_octave', value: 0.5 }
+        ];
+
+        let best = { relationship: 'dissonant', ratio: ratio, deviation: 1 };
+        for (const candidate of relationships) {
+            const deviation = Math.abs(ratio - candidate.value) / candidate.value;
+            if (deviation < best.deviation) {
+                best = { relationship: candidate.name, ratio: ratio, deviation: deviation };
+            }
+        }
+
+        if (best.deviation > 0.15) best.relationship = 'dissonant';
+        return best;
+    }
+
+    calculate_network_coherence(connections) {
+        // تماسك الشبكة: متوسط قوة الرنين مخفّضاً بتشتت القوى بين الاتصالات
+        if (connections.length === 0) return 0;
+
+        const strengths = connections.map(connection => connection.resonance_strength);
+        const mean = strengths.reduce((sum, val) => sum + val, 0) / strengths.length;
+        const variance = strengths.reduce((sum, val) =>
+            sum + (val - mean) * (val - mean), 0) / strengths.length;
+
+        return Math.max(0, Math.min(1, mean * (1 - Math.sqrt(variance))));
     }
 
     // =================== Utility Methods ===================

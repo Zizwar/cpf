@@ -12,6 +12,7 @@ const ScriptManager = require('./script-manager');
 const RealityEngine = require('./reality-engine'); // Assuming RealityEngine is also part of the space
 const WaveDynamics = require('./wave-dynamics');   // And WaveDynamics
 const DecisionQuantum = require('./decision-quantum'); // And DecisionQuantum
+const QuantumSimulators = require('./quantum-simulators'); // المحاكيات الكمية المتوازية
  
 class UnifiedCognitiveSpace {
     constructor(brain_capacity = 1000) {
@@ -42,7 +43,10 @@ class UnifiedCognitiveSpace {
 
             // نظام اتخاذ القرار الكمي
             decision_quantum: new DecisionQuantum(),
-            
+
+            // المحاكيات الكمية المتوازية (واقع/ذاكرة/تنبؤ/أنماط)
+            quantum_simulators: new QuantumSimulators({ brain_capacity }),
+
             // الحالة الحالية
             current_script_name: 'default_reality.script', // Default script
             active_perspectives: new Set(),
@@ -89,9 +93,9 @@ class UnifiedCognitiveSpace {
             // الذاكرة المفلترة حسب المنظور
             memory_access: this.space.agate_memory.create_filtered_access(perspective_config),
             
-            // نماذج الآخرين المفلترة
-            others_models_access: this.space.others_models.filter_by_perspective(perspective_config),
-            script_parameters: script_parameters
+            // نماذج الآخرين المفلترة (بالمفتاح الذي يقرأه المحاكي فعلاً)
+            others_models: this.space.others_models.filter_by_perspective(perspective_config),
+            script_parameters: script_parameters,
             // (جديد) تمرير الخبرات والمعدل المعرفي
             active_experiences: relevant_experiences,
             cognitive_modifier: this.space.system_state.current_cognitive_modifier
