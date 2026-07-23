@@ -396,6 +396,111 @@ classify_noise_or_pattern(signal) {
         return { interference_patterns: patterns };
     }
 
+    // 🆕 حساب مستوى الدقة الفيكتورية من سعة الدماغ
+    calculate_precision_level() {
+        const capacity = this.brain_capacity || 1000;
+        if (capacity < 500) return 1;
+        if (capacity < 5000) return 3;
+        if (capacity < 50000) return 5;
+        if (capacity < 500000) return 8;
+        return 10;
+    }
+
+    // 🆕 تحليل عميق للإشارة: ضوضاء أم نمط أم زخرفة؟
+    // "ما يبدو ضوضاء في دماغ صغير هو زخرفة في دماغ كبير"
+    deep_pattern_analysis(signal) {
+        const magnitude = Math.abs(signal);
+        const precision = this.precision_level || this.calculate_precision_level();
+
+        // كلما زادت الدقة، انخفضت عتبة اعتبار الإشارة "نمطاً"
+        const pattern_threshold = 0.3 / precision;
+        const ornament_threshold = 0.05 / precision;
+
+        if (magnitude < ornament_threshold) return 'ornament';   // تفصيل دقيق جميل
+        if (magnitude < pattern_threshold) return 'pattern';     // نمط قابل للمعالجة
+        return 'noise';                                          // ما يزال ضوضاء لهذه السعة
+    }
+
+    // 🆕 حساب قوة التقاطع بين خبرتين (انتقال المهارة)
+    calculate_experience_crossover(osc1, osc2) {
+        // تشابه الترددات = تشابه إيقاع المهارتين
+        const freq_similarity = 1 - Math.min(1, Math.abs(osc1.frequency - osc2.frequency) / 0.5);
+        // إمكانية التقاطع المعلنة لكل خبرة
+        const declared_potential = ((osc1.crossover_potential || 0) + (osc2.crossover_potential || 0)) / 2;
+        // تقارب السعات = تقارب مستوى الإتقان
+        const amp_similarity = 1 - Math.min(1, Math.abs(osc1.amplitude - osc2.amplitude));
+
+        return freq_similarity * 0.4 + declared_potential * 0.4 + amp_similarity * 0.2;
+    }
+
+    // 🆕 حقن ضوضاء وقائية - تكسر الأنماط الضارة (الاجترار، دوامة القلق)
+    inject_protective_noise(intensity = 0.3) {
+        const clamped = Math.max(0, Math.min(1, intensity));
+        this.wave_state.noise_levels.set('protective', {
+            intensity: clamped,
+            injected_at: Date.now(),
+            purpose: 'break_harmful_patterns'
+        });
+
+        // إضعاف المذبذبات عالية السعة (الأنماط المسيطرة) بشكل عشوائي خفيف
+        for (const [id, osc] of this.wave_state.active_oscillators) {
+            if (osc.amplitude > 0.7) {
+                osc.amplitude *= (1 - clamped * 0.3);
+                osc.phase += (this.webppl.gaussian(0, clamped * 0.5));
+            }
+        }
+
+        this.metrics.noise_effectiveness = Math.min(1, this.metrics.noise_effectiveness + clamped * 0.05);
+        return { applied: true, intensity: clamped };
+    }
+
+    // 🆕 حقن ضوضاء إبداعية - تفتح مسارات جديدة للاستكشاف
+    inject_creative_noise(intensity = 0.3) {
+        const clamped = Math.max(0, Math.min(1, intensity));
+        this.wave_state.noise_levels.set('creative', {
+            intensity: clamped,
+            injected_at: Date.now(),
+            purpose: 'enhance_exploration'
+        });
+
+        // اهتزاز طور خفيف لكل المذبذبات = زعزعة لطيفة تسمح بتركيبات جديدة
+        for (const [id, osc] of this.wave_state.active_oscillators) {
+            osc.phase += this.webppl.gaussian(0, clamped * 0.3);
+        }
+
+        return { applied: true, intensity: clamped };
+    }
+
+    // 🆕 حقن تضخيم اصطناعي - محاكاة الإدمان/المواد (تحذير: للبحث فقط)
+    inject_artificial_boost(target = 'emotional_waves', intensity = 0.5) {
+        const clamped = Math.max(0, Math.min(1, intensity));
+        const existing = this.wave_state.active_oscillators.get(target);
+
+        if (existing) {
+            existing.amplitude = Math.min(2.0, existing.amplitude * (1 + clamped));
+            existing.artificial_boost = (existing.artificial_boost || 0) + clamped;
+        } else {
+            // إنشاء مذبذب اصطناعي جديد - "الشعور الجيد المصطنع"
+            this.wave_state.active_oscillators.set(target, {
+                type: 'artificial_oscillator',
+                frequency: 0.05,
+                amplitude: clamped * 1.5,
+                phase: 0,
+                artificial_boost: clamped,
+                origin: 'external_injection'
+            });
+        }
+
+        this.wave_state.noise_levels.set('artificial_boost', {
+            target,
+            intensity: clamped,
+            injected_at: Date.now(),
+            purpose: 'addiction_simulation'
+        });
+
+        return { applied: true, target, intensity: clamped };
+    }
+
     /**
      * Assess noise requirements based on interference patterns
      */

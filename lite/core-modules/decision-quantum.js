@@ -47,7 +47,7 @@ class DecisionQuantum {
         };
         
         // Self-Copies (Others Modeling) System
-        self.copies_system = {
+        this.self_copies_system = {
             model_types: {
                 family_expectations: {
                     influence_weight: 0.8,
@@ -130,57 +130,90 @@ class DecisionQuantum {
     /**
      * Main decision evaluation function
      * Creates superposition of possibilities and manages collapse
+     *
+     * ملاحظة مهمة: هذه الدالة تُرجع كائناً عادياً (وليس غلاف توزيع احتمالي)
+     * لأن unified-cognitive-space.internal_parliament يقرأ حقولها مباشرة.
      */
     evaluate(decision_context, context = {}) {
-        return this.webppl.infer(() => {
-            // Create superposition of all possible decisions
-            const decision_superposition = this.create_decision_superposition(decision_context);
-            
-            // Apply trust matrix evaluation
-            const trust_weighted_options = this.apply_trust_weighting(
-                decision_superposition, 
-                decision_context.trust_context || {}
-            );
-            
-            // Apply social modeling influences
-            const socially_influenced_options = this.apply_social_modeling(
-                trust_weighted_options,
-                decision_context.social_models || []
-            );
-            
-            // Assess collapse conditions
-            const collapse_assessment = this.assess_collapse_conditions(
+        // Create superposition of all possible decisions
+        const decision_superposition = this.create_decision_superposition(decision_context);
+
+        // Apply trust matrix evaluation
+        const trust_weighted_options = this.apply_trust_weighting(
+            decision_superposition,
+            decision_context.trust_context || {}
+        );
+
+        // Apply social modeling influences
+        const socially_influenced_options = this.apply_social_modeling(
+            trust_weighted_options,
+            decision_context.social_models || []
+        );
+
+        // Assess collapse conditions
+        const collapse_assessment = this.assess_collapse_conditions(
+            socially_influenced_options,
+            decision_context,
+            context
+        );
+
+        // نرتب الخيارات حسب احتمالها النهائي لعرضها في العقد الموحد للنتيجة
+        const options_summary = [...socially_influenced_options]
+            .sort((a, b) => b.social_adjusted_probability - a.social_adjusted_probability)
+            .map(opt => ({
+                option_id: opt.option_id,
+                option: opt.option,
+                probability: opt.social_adjusted_probability,
+                trust_confidence: opt.trust_confidence,
+                social_anxiety_level: opt.social_anxiety_level
+            }));
+
+        // Execute collapse if conditions are met
+        if (collapse_assessment.should_collapse) {
+            const collapsed_decision = this.execute_wave_collapse(
                 socially_influenced_options,
-                decision_context,
-                context
+                collapse_assessment
             );
-            
-            // Execute collapse if conditions are met
-            if (collapse_assessment.should_collapse) {
-                const collapsed_decision = this.execute_wave_collapse(
-                    socially_influenced_options,
-                    collapse_assessment
-                );
-                
-                return {
-                    state: "collapsed",
-                    decision: collapsed_decision,
-                    collapse_trigger: collapse_assessment.primary_trigger,
+
+            return {
+                state: "collapsed",
+                decision: {
+                    option_id: collapsed_decision.option_id,
+                    option: collapsed_decision.option,
                     confidence: collapsed_decision.confidence,
-                    alternative_paths: socially_influenced_options.filter(opt => 
-                        opt.option_id !== collapsed_decision.option_id
-                    ).slice(0, 3)
-                };
-            } else {
-                return {
-                    state: "superposition_maintained",
-                    options: socially_influenced_options,
-                    collapse_probability: collapse_assessment.collapse_probability,
-                    recommendation: this.generate_superposition_recommendation(collapse_assessment),
-                    information_needs: this.identify_information_needs(socially_influenced_options)
-                };
-            }
-        });
+                    expected_outcome_quality: collapsed_decision.expected_outcome_quality,
+                    residual_uncertainty: collapsed_decision.residual_uncertainty
+                },
+                confidence: collapsed_decision.confidence,
+                collapse_trigger: collapse_assessment.primary_trigger,
+                collapse_probability: collapse_assessment.collapse_probability,
+                options: options_summary,
+                recommendation: "commit_to_collapsed_decision",
+                information_needs: this.identify_information_needs(socially_influenced_options),
+                alternative_paths: socially_influenced_options.filter(opt =>
+                    opt.option_id !== collapsed_decision.option_id
+                ).slice(0, 3),
+                reasoning: this.summarize_reasoning(collapsed_decision, collapse_assessment)
+            };
+        } else {
+            // البقاء في حالة التراكب: نفس عقد النتيجة، بدون قرار نهائي
+            const leading_probability = options_summary.length > 0 ? options_summary[0].probability : 0;
+
+            return {
+                state: "superposition",
+                decision: null,
+                confidence: leading_probability,
+                collapse_trigger: null,
+                collapse_probability: collapse_assessment.collapse_probability,
+                options: options_summary,
+                recommendation: this.generate_superposition_recommendation(collapse_assessment),
+                information_needs: this.identify_information_needs(socially_influenced_options),
+                alternative_paths: options_summary.slice(1, 4),
+                reasoning: `superposition maintained: collapse probability ` +
+                    `${(collapse_assessment.collapse_probability * 100).toFixed(1)}% below threshold, ` +
+                    `${options_summary.length} options still coherent`
+            };
+        }
     }
 
     /**
@@ -227,205 +260,199 @@ class DecisionQuantum {
 
     /**
      * Apply trust matrix weighting to decision options
+     * تُرجع مصفوفة خيارات عادية — وليس غلاف توزيع — لأن المسار الحي يمر عبرها
      */
     apply_trust_weighting(superposition, trust_context) {
-        return this.webppl.infer(() => {
-            const trust_weighted_options = [];
-            
-            for (const option of superposition) {
-                // Calculate trust scores for entities involved in this option
-                const involved_entities = this.identify_involved_entities(option, trust_context);
-                const trust_evaluations = this.evaluate_trust_for_entities(involved_entities);
-                
-                // Weight option probability by trust levels
-                const trust_multiplier = this.calculate_trust_multiplier(trust_evaluations);
-                
-                const weighted_option = {
-                    ...option,
-                    trust_adjusted_probability: option.base_probability * trust_multiplier,
-                    trust_evaluations: trust_evaluations,
-                    trust_confidence: this.calculate_trust_confidence(trust_evaluations),
-                    
-                    // Trust-specific assessments
-                    competence_confidence: this.extract_competence_confidence(trust_evaluations),
-                    benevolence_assurance: this.extract_benevolence_assurance(trust_evaluations),
-                    integrity_alignment: this.extract_integrity_alignment(trust_evaluations),
-                    
-                    // Risk adjustments based on trust
-                    trust_adjusted_risk: this.adjust_risk_for_trust(option.risk_assessment, trust_evaluations)
-                };
-                
-                trust_weighted_options.push(weighted_option);
-            }
-            
-            return this.normalize_trust_weighted_probabilities(trust_weighted_options);
-        });
+        const trust_weighted_options = [];
+
+        for (const option of superposition) {
+            // Calculate trust scores for entities involved in this option
+            const involved_entities = this.identify_involved_entities(option, trust_context);
+            const trust_evaluations = this.evaluate_trust_for_entities(involved_entities);
+
+            // Weight option probability by trust levels
+            const trust_multiplier = this.calculate_trust_multiplier(trust_evaluations);
+
+            const weighted_option = {
+                ...option,
+                trust_adjusted_probability: option.base_probability * trust_multiplier,
+                trust_evaluations: trust_evaluations,
+                trust_confidence: this.calculate_trust_confidence(trust_evaluations),
+
+                // Trust-specific assessments
+                competence_confidence: this.extract_competence_confidence(trust_evaluations),
+                benevolence_assurance: this.extract_benevolence_assurance(trust_evaluations),
+                integrity_alignment: this.extract_integrity_alignment(trust_evaluations),
+
+                // Risk adjustments based on trust
+                trust_adjusted_risk: this.adjust_risk_for_trust(option.risk_assessment, trust_evaluations)
+            };
+
+            trust_weighted_options.push(weighted_option);
+        }
+
+        return this.normalize_trust_weighted_probabilities(trust_weighted_options);
     }
 
     /**
      * Apply social modeling influences (self-copies system)
+     * تُرجع مصفوفة خيارات عادية جاهزة لتقييم شروط الانهيار
      */
     apply_social_modeling(trust_weighted_options, social_models) {
-        return this.webppl.infer(() => {
-            const socially_modeled_options = [];
-            
-            for (const option of trust_weighted_options) {
-                // Model how each social entity would view this option
-                const social_influences = this.model_social_influences(option, social_models);
-                
-                // Check for recursive modeling depth limits
-                const recursive_safety_check = this.check_recursive_modeling_safety(social_influences);
-                
-                // Apply social influence weighting
-                const social_multiplier = this.calculate_social_influence_multiplier(
-                    social_influences, 
-                    recursive_safety_check
-                );
-                
-                const socially_influenced_option = {
-                    ...option,
-                    social_adjusted_probability: option.trust_adjusted_probability * social_multiplier,
-                    social_influences: social_influences,
-                    social_anxiety_level: this.calculate_social_anxiety(social_influences),
-                    
-                    // Social validation measures
-                    family_approval: this.extract_family_approval(social_influences),
-                    peer_acceptance: this.extract_peer_acceptance(social_influences),
-                    authority_sanction: this.extract_authority_sanction(social_influences),
-                    
-                    // Future/ideal self alignment
-                    future_self_approval: this.extract_future_self_approval(social_influences),
-                    ideal_self_consistency: this.extract_ideal_self_consistency(social_influences),
-                    
-                    // Identity protection status
-                    identity_threats: recursive_safety_check.identity_threats,
-                    protective_mechanisms_active: recursive_safety_check.protections_applied
-                };
-                
-                socially_modeled_options.push(socially_influenced_option);
-            }
-            
-            return this.normalize_social_probabilities(socially_modeled_options);
-        });
+        const socially_modeled_options = [];
+
+        for (const option of trust_weighted_options) {
+            // Model how each social entity would view this option
+            const social_influences = this.model_social_influences(option, social_models);
+
+            // Check for recursive modeling depth limits
+            const recursive_safety_check = this.check_recursive_modeling_safety(social_influences);
+
+            // Apply social influence weighting
+            const social_multiplier = this.calculate_social_influence_multiplier(
+                social_influences,
+                recursive_safety_check
+            );
+
+            const socially_influenced_option = {
+                ...option,
+                social_adjusted_probability: option.trust_adjusted_probability * social_multiplier,
+                social_influences: social_influences,
+                social_anxiety_level: this.calculate_social_anxiety(social_influences),
+
+                // Social validation measures
+                family_approval: this.extract_family_approval(social_influences),
+                peer_acceptance: this.extract_peer_acceptance(social_influences),
+                authority_sanction: this.extract_authority_sanction(social_influences),
+
+                // Future/ideal self alignment
+                future_self_approval: this.extract_future_self_approval(social_influences),
+                ideal_self_consistency: this.extract_ideal_self_consistency(social_influences),
+
+                // Identity protection status
+                identity_threats: recursive_safety_check.identity_threats,
+                protective_mechanisms_active: recursive_safety_check.protections_applied
+            };
+
+            socially_modeled_options.push(socially_influenced_option);
+        }
+
+        return this.normalize_social_probabilities(socially_modeled_options);
     }
 
     /**
      * Assess conditions for wave function collapse
      */
     assess_collapse_conditions(options, decision_context, context) {
-        return this.webppl.infer(() => {
-            const conditions = {
-                time_pressure: this.assess_time_pressure(decision_context, context),
-                confidence_threshold: this.assess_confidence_threshold(options),
-                external_pressure: this.assess_external_pressure(decision_context, context),
-                resource_depletion: this.assess_resource_depletion(context),
-                opportunity_window: this.assess_opportunity_window(decision_context, context),
-                cognitive_load: this.assess_cognitive_load(options)
-            };
-            
-            // Calculate collapse probability
-            let collapse_probability = 0;
-            let primary_trigger = null;
-            let trigger_strength = 0;
-            
-            for (const [trigger, value] of Object.entries(conditions)) {
-                const trigger_config = this.collapse_mechanics.collapse_triggers[trigger];
-                if (trigger_config && value > trigger_config.threshold) {
-                    const contribution = (value - trigger_config.threshold) * 
-                                       (trigger_config.urgency_multiplier || 1.0);
-                    collapse_probability += contribution;
-                    
-                    if (contribution > trigger_strength) {
-                        trigger_strength = contribution;
-                        primary_trigger = trigger;
-                    }
+        const conditions = {
+            time_pressure: this.assess_time_pressure(decision_context, context),
+            confidence_threshold: this.assess_confidence_threshold(options),
+            external_pressure: this.assess_external_pressure(decision_context, context),
+            resource_depletion: this.assess_resource_depletion(context),
+            opportunity_window: this.assess_opportunity_window(decision_context, context),
+            cognitive_load: this.assess_cognitive_load(options)
+        };
+
+        // Calculate collapse probability
+        let collapse_probability = 0;
+        let primary_trigger = null;
+        let trigger_strength = 0;
+
+        for (const [trigger, value] of Object.entries(conditions)) {
+            const trigger_config = this.collapse_mechanics.collapse_triggers[trigger];
+            if (trigger_config && value > trigger_config.threshold) {
+                const contribution = (value - trigger_config.threshold) *
+                                   (trigger_config.urgency_multiplier || 1.0);
+                collapse_probability += contribution;
+
+                if (contribution > trigger_strength) {
+                    trigger_strength = contribution;
+                    primary_trigger = trigger;
                 }
             }
-            
-            // Normalize collapse probability
-            collapse_probability = Math.min(1.0, collapse_probability);
-            
-            // Check maximum option complexity
-            const option_complexity = options.length / this.collapse_mechanics.superposition_maintenance.maximum_options;
-            if (option_complexity > this.collapse_mechanics.superposition_maintenance.complexity_threshold) {
-                collapse_probability += 0.3;
-                if (!primary_trigger) primary_trigger = "complexity_overload";
-            }
-            
-            return {
-                should_collapse: collapse_probability > 0.5,
-                collapse_probability: collapse_probability,
-                primary_trigger: primary_trigger,
-                conditions: conditions,
-                urgency_level: this.calculate_urgency_level(conditions),
-                collapse_quality_prediction: this.predict_collapse_quality(options, conditions)
-            };
-        });
+        }
+
+        // Normalize collapse probability
+        collapse_probability = Math.min(1.0, collapse_probability);
+
+        // Check maximum option complexity
+        const option_complexity = options.length / this.collapse_mechanics.superposition_maintenance.maximum_options;
+        if (option_complexity > this.collapse_mechanics.superposition_maintenance.complexity_threshold) {
+            collapse_probability = Math.min(1.0, collapse_probability + 0.3);
+            if (!primary_trigger) primary_trigger = "complexity_overload";
+        }
+
+        return {
+            should_collapse: collapse_probability > 0.5,
+            collapse_probability: collapse_probability,
+            primary_trigger: primary_trigger,
+            conditions: conditions,
+            urgency_level: this.calculate_urgency_level(conditions),
+            collapse_quality_prediction: this.predict_collapse_quality(options, conditions)
+        };
     }
 
     /**
      * Execute wave function collapse to final decision
      */
     execute_wave_collapse(options, collapse_assessment) {
-        return this.webppl.infer(() => {
-            // Sort options by final probability
-            const sorted_options = options.sort((a, b) => 
-                b.social_adjusted_probability - a.social_adjusted_probability
-            );
-            
-            // Select winning option based on collapse conditions
-            const winning_option = this.select_winning_option(sorted_options, collapse_assessment);
-            
-            // Calculate decision confidence
-            const decision_confidence = this.calculate_decision_confidence(
-                winning_option,
-                sorted_options,
-                collapse_assessment
-            );
-            
-            // Generate decision reasoning
-            const reasoning = this.generate_decision_reasoning(
-                winning_option,
-                sorted_options,
-                collapse_assessment
-            );
-            
-            // Create collapsed decision object
-            const collapsed_decision = {
-                option_id: winning_option.option_id,
-                option: winning_option.option,
-                confidence: decision_confidence,
-                reasoning: reasoning,
-                
-                // Quality metrics
-                expected_outcome_quality: this.predict_outcome_quality(winning_option),
-                decision_process_quality: this.assess_decision_process_quality(collapse_assessment),
-                
-                // Component contributions
-                trust_contribution: winning_option.trust_confidence || 0.5,
-                social_contribution: 1 - (winning_option.social_anxiety_level || 0.5),
-                value_contribution: winning_option.value_consistency || 0.5,
-                
-                // Risk and uncertainty
-                residual_uncertainty: this.calculate_residual_uncertainty(winning_option),
-                risk_acceptance: this.calculate_risk_acceptance(winning_option),
-                
-                // Meta-decision information
-                collapse_trigger: collapse_assessment.primary_trigger,
-                alternative_strength: this.calculate_alternative_strength(sorted_options),
-                decision_reversibility: this.assess_decision_reversibility(winning_option),
-                
-                // Timestamps and tracking
-                decision_timestamp: Date.now(),
-                processing_duration: this.calculate_processing_duration(),
-                decision_session_id: this.generateSessionId()
-            };
-            
-            // Store decision for learning
-            this.store_decision_for_learning(collapsed_decision, options, collapse_assessment);
-            
-            return collapsed_decision;
-        });
+        // Sort options by final probability
+        const sorted_options = [...options].sort((a, b) =>
+            b.social_adjusted_probability - a.social_adjusted_probability
+        );
+
+        // Select winning option based on collapse conditions
+        const winning_option = this.select_winning_option(sorted_options, collapse_assessment);
+
+        // Calculate decision confidence
+        const decision_confidence = this.calculate_decision_confidence(
+            winning_option,
+            sorted_options,
+            collapse_assessment
+        );
+
+        // Generate decision reasoning
+        const reasoning = this.generate_decision_reasoning(
+            winning_option,
+            sorted_options,
+            collapse_assessment
+        );
+
+        // Create collapsed decision object
+        const collapsed_decision = {
+            option_id: winning_option.option_id,
+            option: winning_option.option,
+            confidence: decision_confidence,
+            reasoning: reasoning,
+
+            // Quality metrics
+            expected_outcome_quality: this.predict_outcome_quality(winning_option),
+            decision_process_quality: this.assess_decision_process_quality(collapse_assessment),
+
+            // Component contributions
+            trust_contribution: winning_option.trust_confidence || 0.5,
+            social_contribution: 1 - (winning_option.social_anxiety_level || 0.5),
+            value_contribution: winning_option.value_consistency || 0.5,
+
+            // Risk and uncertainty
+            residual_uncertainty: this.calculate_residual_uncertainty(winning_option),
+            risk_acceptance: this.calculate_risk_acceptance(winning_option),
+
+            // Meta-decision information
+            collapse_trigger: collapse_assessment.primary_trigger,
+            alternative_strength: this.calculate_alternative_strength(sorted_options),
+            decision_reversibility: this.assess_decision_reversibility(winning_option),
+
+            // Timestamps and tracking
+            decision_timestamp: Date.now(),
+            processing_duration: this.calculate_processing_duration(),
+            decision_session_id: this.generateSessionId()
+        };
+
+        // Store decision for learning
+        this.store_decision_for_learning(collapsed_decision, options, collapse_assessment);
+
+        return collapsed_decision;
     }
 
     /**
@@ -433,51 +460,52 @@ class DecisionQuantum {
      */
     evaluate_trust_for_entities(entities) {
         const trust_evaluations = {};
-        
+
         for (const entity of entities) {
-            trust_evaluations[entity.id] = this.webppl.infer(() => {
-                // Historical trust components
-                const competence = this.calculate_competence_trust(entity);
-                const benevolence = this.calculate_benevolence_trust(entity);
-                const integrity = this.calculate_integrity_trust(entity);
-                const predictability = this.calculate_predictability_trust(entity);
-                const transparency = this.calculate_transparency_trust(entity);
-                
-                // Weighted overall trust score
-                const weights = this.trust_matrix.trust_calculation_weights;
-                const overall_trust = (
-                    competence * weights.competence +
-                    benevolence * weights.benevolence +
-                    integrity * weights.integrity +
-                    predictability * weights.predictability +
-                    transparency * weights.transparency
-                );
-                
-                return {
-                    overall_trust: overall_trust,
-                    components: {
-                        competence: competence,
-                        benevolence: benevolence,
-                        integrity: integrity,
-                        predictability: predictability,
-                        transparency: transparency
-                    },
-                    trust_confidence: this.calculate_trust_measurement_confidence(entity),
-                    trust_volatility: this.calculate_trust_volatility(entity),
-                    historical_interactions: entity.interaction_history?.length || 0
-                };
-            });
+            // Historical trust components (كل واحدة عينة رقمية مباشرة من توزيع بيتا)
+            const competence = this.calculate_competence_trust(entity);
+            const benevolence = this.calculate_benevolence_trust(entity);
+            const integrity = this.calculate_integrity_trust(entity);
+            const predictability = this.calculate_predictability_trust(entity);
+            const transparency = this.calculate_transparency_trust(entity);
+
+            // Weighted overall trust score
+            const weights = this.trust_matrix.trust_calculation_weights;
+            const overall_trust = (
+                competence * weights.competence +
+                benevolence * weights.benevolence +
+                integrity * weights.integrity +
+                predictability * weights.predictability +
+                transparency * weights.transparency
+            );
+
+            trust_evaluations[entity.id] = {
+                overall_trust: overall_trust,
+                components: {
+                    competence: competence,
+                    benevolence: benevolence,
+                    integrity: integrity,
+                    predictability: predictability,
+                    transparency: transparency
+                },
+                trust_confidence: this.calculate_trust_measurement_confidence(entity),
+                trust_volatility: this.calculate_trust_volatility(entity),
+                historical_interactions: entity.interaction_history?.length || 0
+            };
         }
-        
+
         return trust_evaluations;
     }
 
     calculate_competence_trust(entity) {
         if (!entity.competence_history) return this.webppl.beta(5, 5); // Default moderate
-        
-        const success_rate = entity.competence_history.successes / 
-                           (entity.competence_history.successes + entity.competence_history.failures);
-        const confidence_from_sample_size = Math.min(1.0, entity.competence_history.total / 10);
+
+        const successes = entity.competence_history.successes || 0;
+        const failures = entity.competence_history.failures || 0;
+        if (successes + failures === 0) return this.webppl.beta(5, 5); // لا محاولات مسجلة = حياد
+
+        const success_rate = successes / (successes + failures);
+        const confidence_from_sample_size = Math.min(1.0, (entity.competence_history.total || successes + failures) / 10);
         
         return this.webppl.beta(
             success_rate * 10 * confidence_from_sample_size + 1,
@@ -514,34 +542,33 @@ class DecisionQuantum {
 
     model_social_entity_response(option, model_type) {
         const model_config = this.self_copies_system.model_types[model_type];
-        
-        return this.webppl.infer(() => {
-            // Model how this social entity would evaluate the option
-            const entity_evaluation = {
-                approval_probability: this.webppl.beta(5, 5), // Start neutral
-                emotional_reaction: this.webppl.gaussian(0, 0.5), // Neutral to positive/negative
-                influence_strength: model_config.influence_weight,
-                model_accuracy: model_config.model_accuracy,
-                emotional_impact: model_config.emotional_impact
-            };
-            
-            // Adjust based on option characteristics and model type
-            if (model_type === "family_expectations") {
-                entity_evaluation.approval_probability = this.adjust_for_family_values(
-                    option, entity_evaluation.approval_probability
-                );
-            } else if (model_type === "future_self") {
-                entity_evaluation.approval_probability = this.adjust_for_future_consequences(
-                    option, entity_evaluation.approval_probability
-                );
-            } else if (model_type === "ideal_self") {
-                entity_evaluation.approval_probability = this.adjust_for_ideal_alignment(
-                    option, entity_evaluation.approval_probability
-                );
-            }
-            
-            return entity_evaluation;
-        });
+
+        // Model how this social entity would evaluate the option
+        // كائن عادي: مستهلكوه يقرؤون approval_probability وأخواتها مباشرة
+        const entity_evaluation = {
+            approval_probability: this.webppl.beta(5, 5), // Start neutral
+            emotional_reaction: this.webppl.gaussian(0, 0.5), // Neutral to positive/negative
+            influence_strength: model_config.influence_weight,
+            model_accuracy: model_config.model_accuracy,
+            emotional_impact: model_config.emotional_impact
+        };
+
+        // Adjust based on option characteristics and model type
+        if (model_type === "family_expectations") {
+            entity_evaluation.approval_probability = this.adjust_for_family_values(
+                option, entity_evaluation.approval_probability
+            );
+        } else if (model_type === "future_self") {
+            entity_evaluation.approval_probability = this.adjust_for_future_consequences(
+                option, entity_evaluation.approval_probability
+            );
+        } else if (model_type === "ideal_self") {
+            entity_evaluation.approval_probability = this.adjust_for_ideal_alignment(
+                option, entity_evaluation.approval_probability
+            );
+        }
+
+        return entity_evaluation;
     }
 
     check_recursive_modeling_safety(social_influences) {
@@ -611,8 +638,9 @@ class DecisionQuantum {
 
     assess_time_pressure(decision_context, context) {
         const deadline_pressure = context.deadline_pressure || 0;
+        const time_pressure = decision_context.time_pressure || 0; // الضغط الزمني الصريح في سياق القرار
         const urgency = decision_context.urgency || 0;
-        return Math.max(deadline_pressure, urgency);
+        return Math.max(deadline_pressure, time_pressure, urgency);
     }
 
     assess_confidence_threshold(options) {
@@ -660,10 +688,9 @@ class DecisionQuantum {
         }
         
         // Otherwise, use probabilistic selection weighted by probabilities
+        // categorical(outcomes, probabilities) تُرجع عنصر الخيار نفسه مباشرة
         const probabilities = sorted_options.map(opt => opt.social_adjusted_probability);
-        const selectedIndex = this.webppl.categorical(probabilities);
-        
-        return sorted_options[selectedIndex];
+        return this.webppl.categorical(sorted_options, probabilities);
     }
 
     calculate_decision_confidence(winning_option, all_options, collapse_assessment) {
@@ -737,24 +764,38 @@ class DecisionQuantum {
     }
 
     calculate_trust_confidence(trust_evaluations) {
-        const confidences = Object.values(trust_evaluations).map(_eval => eval.trust_confidence);
-        return confidences.length > 0 ? confidences.reduce((a, b) => a + b, 0) / confidences.length : 0.5;
+        const confidences = Object.values(trust_evaluations).map(_eval => _eval.trust_confidence || 0);
+        if (confidences.length === 0) return 0.5; // لا كيانات = ثقة قياس محايدة
+        return confidences.reduce((sum, c) => sum + c, 0) / confidences.length;
     }
 
     extract_competence_confidence(trust_evaluations) {
-        return Object.values(trust_evaluations).reduce((avg, _eval) => 
-            avg + eval.components.competence, 0) / Object.keys(trust_evaluations).length || 0.5;
+        const evals = Object.values(trust_evaluations);
+        if (evals.length === 0) return 0.5;
+        const total = evals.reduce((sum, _eval) => sum + (_eval.components?.competence ?? 0.5), 0);
+        return total / evals.length;
     }
 
     extract_benevolence_assurance(trust_evaluations) {
-        return Object.values(trust_evaluations).reduce((avg, _eval) => 
-            avg + eval.components.benevolence, 0) / Object.keys(trust_evaluations).length || 0.5;
+        const evals = Object.values(trust_evaluations);
+        if (evals.length === 0) return 0.5;
+        const total = evals.reduce((sum, _eval) => sum + (_eval.components?.benevolence ?? 0.5), 0);
+        return total / evals.length;
+    }
+
+    extract_integrity_alignment(trust_evaluations) {
+        const evals = Object.values(trust_evaluations);
+        if (evals.length === 0) return 0.5;
+        const total = evals.reduce((sum, _eval) => sum + (_eval.components?.integrity ?? 0.5), 0);
+        return total / evals.length;
     }
 
     adjust_risk_for_trust(base_risk, trust_evaluations) {
-        const average_trust = Object.values(trust_evaluations).reduce((avg, _eval) => 
-            avg + _eval.overall_trust, 0) / Object.keys(trust_evaluations).length || 0.5;
-        
+        const evals = Object.values(trust_evaluations);
+        const average_trust = evals.length > 0
+            ? evals.reduce((sum, _eval) => sum + (_eval.overall_trust || 0), 0) / evals.length
+            : 0.5;
+
         return base_risk * (1.5 - average_trust); // Higher trust reduces perceived risk
     }
 
@@ -769,8 +810,27 @@ class DecisionQuantum {
         return social_influences.family_expectations?.approval_probability || 0.5;
     }
 
+    extract_peer_acceptance(social_influences) {
+        return social_influences.peer_comparisons?.approval_probability || 0.5;
+    }
+
+    extract_authority_sanction(social_influences) {
+        return social_influences.authority_figures?.approval_probability || 0.5;
+    }
+
     extract_future_self_approval(social_influences) {
         return social_influences.future_self?.approval_probability || 0.5;
+    }
+
+    extract_ideal_self_consistency(social_influences) {
+        return social_influences.ideal_self?.approval_probability || 0.5;
+    }
+
+    calculate_risk_acceptance(option) {
+        // قبول المخاطرة يرتفع مع الثقة والرغبة، وينخفض مع الخطر المُقيَّم بعد تعديل الثقة
+        const perceived_risk = option.trust_adjusted_risk ?? option.risk_assessment ?? 0.5;
+        const appetite = ((option.desirability || 0.5) + (option.trust_confidence || 0.5)) / 2;
+        return Math.max(0, Math.min(1, appetite * (1 - perceived_risk * 0.6)));
     }
 
     assess_external_pressure(decision_context, context) {
@@ -827,6 +887,18 @@ class DecisionQuantum {
         };
     }
 
+    summarize_reasoning(collapsed_decision, collapse_assessment) {
+        // ملخص نصي واحد لعقد النتيجة النهائي (evaluate يشترط reasoning: string)
+        const option_label = typeof collapsed_decision.option === 'object'
+            ? (collapsed_decision.option?.description || collapsed_decision.option?.id || 'selected_option')
+            : String(collapsed_decision.option);
+
+        return `wave collapse via ${collapse_assessment.primary_trigger || 'accumulated_pressure'}: ` +
+            `"${option_label}" won with confidence ${(collapsed_decision.confidence * 100).toFixed(1)}%, ` +
+            `trust contribution ${(collapsed_decision.trust_contribution * 100).toFixed(0)}%, ` +
+            `social alignment ${(collapsed_decision.social_contribution * 100).toFixed(0)}%`;
+    }
+
     predict_outcome_quality(option) {
         return (
             (option.feasibility || 0.5) * 0.3 +
@@ -865,21 +937,64 @@ class DecisionQuantum {
             assessment: assessment,
             timestamp: Date.now()
         });
-        
+
+        // سقف للذاكرة: نحتفظ بأحدث 200 قرار فقط (خرائط Map تحفظ ترتيب الإدراج، فالأقدم أولاً)
+        const max_stored_decisions = 200;
+        while (this.decision_state.collapsed_decisions.size > max_stored_decisions) {
+            const oldest_key = this.decision_state.collapsed_decisions.keys().next().value;
+            this.decision_state.collapsed_decisions.delete(oldest_key);
+        }
+
         // Update metrics
         this.decision_state.decision_quality_history.push(decision.expected_outcome_quality);
-        
+
         // Keep only recent decisions for memory management
         if (this.decision_state.decision_quality_history.length > 100) {
-            this.decision_state.decision_quality_history = 
+            this.decision_state.decision_quality_history =
                 this.decision_state.decision_quality_history.slice(-50);
         }
     }
 
-    // Additional placeholder methods
-    calculate_integrity_trust(entity) { return this.webppl.beta(5, 5); }
-    calculate_predictability_trust(entity) { return this.webppl.beta(6, 4); }
-    calculate_transparency_trust(entity) { return this.webppl.beta(4, 6); }
+    // Trust dimension calculations from entity history (with sensible priors when history is absent)
+    calculate_integrity_trust(entity) {
+        // النزاهة: الاتساق بين القيم والأفعال — نستدل عليها من الاتساق العاطفي ومؤشرات النية
+        if (typeof entity.emotional_consistency === 'number') {
+            const c = Math.max(0, Math.min(1, entity.emotional_consistency));
+            return this.webppl.beta(c * 8 + 1, (1 - c) * 8 + 1);
+        }
+        const positive = entity.benevolence_indicators?.positive || 0;
+        const negative = entity.benevolence_indicators?.negative || 0;
+        if (positive + negative > 0) {
+            return this.webppl.beta(positive + 4, negative + 4); // مؤشرات النية دليل جزئي على النزاهة
+        }
+        return this.webppl.beta(5, 5); // Prior محايد بلا أي تاريخ
+    }
+
+    calculate_predictability_trust(entity) {
+        // القابلية للتنبؤ: الاتساق السلوكي عبر الزمن — تزداد مع حجم التاريخ ونسبة النجاح المستقرة
+        const history = entity.interaction_history || [];
+        if (history.length > 0) {
+            const consistent = history.filter(i => i && i.consistent !== false).length;
+            return this.webppl.beta(consistent + 2, (history.length - consistent) + 2);
+        }
+        const total = entity.competence_history?.total || 0;
+        if (total > 0) {
+            const success_rate = (entity.competence_history.successes || 0) / total;
+            const exposure = Math.min(1, total / 10); // خبرة أكبر = يقين أعلى
+            return this.webppl.beta(2 + success_rate * exposure * 8, 2 + (1 - success_rate) * exposure * 8);
+        }
+        return this.webppl.beta(6, 4); // بلا تاريخ: تفاؤل خفيف بالاستقرار
+    }
+
+    calculate_transparency_trust(entity) {
+        // الشفافية: إن كانت مُقاسة مباشرة على الكيان نستخدمها كمركز للتوزيع
+        if (typeof entity.transparency === 'number') {
+            const t = Math.max(0, Math.min(1, entity.transparency));
+            return this.webppl.beta(t * 10 + 1, (1 - t) * 10 + 1);
+        }
+        return this.webppl.beta(4, 6); // Prior متشائم قليلاً: الشفافية لا تُفترض بل تُثبت
+    }
+
     calculate_trust_measurement_confidence(entity) { return this.webppl.beta(6, 4); }
     calculate_trust_volatility(entity) { return this.webppl.beta(3, 7); }
     

@@ -269,30 +269,53 @@ class CognitiveRhythm {
 
     /**
      * تسجيل نمط جديد
+     * المعرف مشتق من محتوى النمط (وليس من الوقت) حتى تتراكم التكرارات
+     * بدلاً من تضخم الذاكرة بنسخ مكررة.
      */
     register_new_pattern(type, pattern) {
-        const pattern_id = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-        
-        if (!this.pattern_memory.has(pattern_id)) {
-            this.pattern_memory.set(pattern_id, {
-                type: type,
-                pattern: pattern,
-                first_detected: Date.now(),
-                occurrence_count: 1,
-                significance: pattern.significance || 0.5
-            });
-            
-            this.discovered_patterns.add(pattern_id);
-            this.metrics.patterns_discovered++;
-            
-            console.log(`🎯 New pattern discovered: ${type}`);
-            console.log(`   Pattern ID: ${pattern_id}`);
-            console.log(`   Significance: ${pattern.significance || 0.5}`);
-            
-            // طلب توسع معرفي إذا كان النمط مهماً
-            if (pattern.significance > 0.7) {
-                this.request_cognitive_expansion(pattern);
+        const content_key = pattern.pattern || pattern.digit || pattern.difference?.toFixed?.(4) || 'generic';
+        const pattern_id = `${type}_${content_key}`;
+
+        if (this.pattern_memory.has(pattern_id)) {
+            // نمط معروف: نزيد عداد التكرار ونرفع الأهمية قليلاً
+            const existing = this.pattern_memory.get(pattern_id);
+            existing.occurrence_count++;
+            existing.last_detected = Date.now();
+            existing.significance = Math.min(1.0, existing.significance + 0.01);
+            return;
+        }
+
+        this.pattern_memory.set(pattern_id, {
+            type: type,
+            pattern: pattern,
+            first_detected: Date.now(),
+            last_detected: Date.now(),
+            occurrence_count: 1,
+            significance: pattern.significance || 0.5
+        });
+
+        this.discovered_patterns.add(pattern_id);
+        this.metrics.patterns_discovered++;
+
+        // حد أقصى لذاكرة الأنماط: نتخلص من الأقل أهمية عند التجاوز
+        const MAX_PATTERNS = 500;
+        if (this.pattern_memory.size > MAX_PATTERNS) {
+            let weakest_id = null, weakest_sig = Infinity;
+            for (const [id, data] of this.pattern_memory) {
+                if (data.significance < weakest_sig) {
+                    weakest_sig = data.significance;
+                    weakest_id = id;
+                }
             }
+            if (weakest_id) {
+                this.pattern_memory.delete(weakest_id);
+                this.discovered_patterns.delete(weakest_id);
+            }
+        }
+
+        // طلب توسع معرفي إذا كان النمط مهماً
+        if ((pattern.significance || 0.5) > 0.7) {
+            this.request_cognitive_expansion(pattern);
         }
     }
 
@@ -494,20 +517,35 @@ class FibonacciPatternDetector {
 class GoldenRatioDetector {
     constructor() {
         this.golden_ratio = 1.618033988749895;
+        // مقلوب النسبة الذهبية 0.618... هو ما يمكن أن يظهر فعلاً في قيمة القاضي [0, 1]
+        this.inverse_golden = 0.6180339887498949;
         this.tolerance = 0.001;
     }
-    
+
     analyze(value) {
-        const ratio_difference = Math.abs(value - this.golden_ratio);
-        
-        if (ratio_difference < this.tolerance) {
+        // 1. قرب القيمة نفسها من 1/φ (قيمة القاضي محصورة تقريباً في [0, 1])
+        const inverse_difference = Math.abs(value - this.inverse_golden);
+        if (inverse_difference < this.tolerance) {
             return {
                 detected: true,
-                difference: ratio_difference,
-                significance: 1.0 - (ratio_difference / this.tolerance)
+                variant: 'inverse_golden_ratio',
+                difference: inverse_difference,
+                significance: 1.0 - (inverse_difference / this.tolerance)
             };
         }
-        
+
+        // 2. البحث عن البصمة الرقمية "618" في الأرقام العشرية
+        const decimal_part = value.toString().split('.')[1] || '';
+        const position = decimal_part.indexOf('618');
+        if (position !== -1 && position < 6) {
+            return {
+                detected: true,
+                variant: 'golden_digits',
+                position,
+                significance: Math.max(0.3, 0.8 - position * 0.1)
+            };
+        }
+
         return { detected: false };
     }
 }

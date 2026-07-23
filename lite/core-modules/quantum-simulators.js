@@ -98,76 +98,74 @@ class QuantumSimulators {
      * Main processing function - quantum superposition of interpretations
      */
     process(query, concept_weights = {}) {
-        return this.webppl.infer(() => {
-            // Environmental context analysis
-            const environmental_context = this.analyze_environmental_context(query.context || {});
-            
-            // Activate relevant simulators based on query and context
-            const active_simulators = this.select_active_simulators(query, environmental_context);
-            
-            // Apply middleware filtering
-            const filtered_query = this.apply_middleware_filtering(query, environmental_context);
-            
-            // Process through each active simulator in parallel
-            const simulator_outputs = {};
-            for (const sim_type of active_simulators) {
-                simulator_outputs[sim_type] = this.run_individual_simulator(
-                    sim_type, 
-                    filtered_query, 
-                    environmental_context
-                );
+        // كائن عادي من البداية للنهاية: أمثلة الاستخدام تقرأ الحقول مباشرة (وليس غلاف توزيع)
+        // Environmental context analysis
+        const environmental_context = this.analyze_environmental_context(query.context || {});
+
+        // Activate relevant simulators based on query and context
+        const active_simulators = this.select_active_simulators(query, environmental_context);
+
+        // Apply middleware filtering
+        const filtered_query = this.apply_middleware_filtering(query, environmental_context);
+
+        // Process through each active simulator in parallel
+        const simulator_outputs = {};
+        for (const sim_type of active_simulators) {
+            simulator_outputs[sim_type] = this.run_individual_simulator(
+                sim_type,
+                filtered_query,
+                environmental_context
+            );
+        }
+
+        // Apply cross-talk between simulators
+        const cross_talked_outputs = this.apply_cross_talk(simulator_outputs);
+
+        // Generate final superposition state
+        return {
+            superposition_state: cross_talked_outputs,
+            active_types: Array.from(active_simulators),
+            coherence_score: this.calculate_output_coherence(cross_talked_outputs),
+            environmental_influence: environmental_context,
+            simulator_outputs: simulator_outputs,
+            middleware_actions: this.get_middleware_actions(),
+            processing_metadata: {
+                total_simulators: active_simulators.size,
+                cross_talk_intensity: this.calculate_cross_talk_intensity(),
+                environmental_weight: environmental_context.total_influence
             }
-            
-            // Apply cross-talk between simulators
-            const cross_talked_outputs = this.apply_cross_talk(simulator_outputs);
-            
-            // Generate final superposition state
-            return {
-                superposition_state: cross_talked_outputs,
-                active_types: Array.from(active_simulators),
-                environmental_influence: environmental_context,
-                middleware_actions: this.get_middleware_actions(),
-                coherence_score: this.calculate_output_coherence(cross_talked_outputs),
-                processing_metadata: {
-                    total_simulators: active_simulators.size,
-                    cross_talk_intensity: this.calculate_cross_talk_intensity(),
-                    environmental_weight: environmental_context.total_influence
-                }
-            };
-        });
+        };
     }
 
     /**
      * Analyze environmental context and its influence on processing
      */
     analyze_environmental_context(context) {
-        return this.webppl.infer(() => {
-            const physical_influence = this.assess_physical_context(context.physical || {});
-            const social_influence = this.assess_social_context(context.social || {});
-            const temporal_influence = this.assess_temporal_context(context.temporal || {});
-            const cognitive_influence = this.assess_cognitive_context(context.cognitive || {});
-            
-            const total_influence = (
-                physical_influence.weight + 
-                social_influence.weight + 
-                temporal_influence.weight + 
-                cognitive_influence.weight
-            ) / 4;
-            
-            return {
-                physical: physical_influence,
-                social: social_influence,
-                temporal: temporal_influence,
-                cognitive: cognitive_influence,
-                total_influence: total_influence,
-                dominant_factor: this.identify_dominant_factor({
-                    physical: physical_influence.weight,
-                    social: social_influence.weight,
-                    temporal: temporal_influence.weight,
-                    cognitive: cognitive_influence.weight
-                })
-            };
-        });
+        const physical_influence = this.assess_physical_context(context.physical || {});
+        const social_influence = this.assess_social_context(context.social || {});
+        const temporal_influence = this.assess_temporal_context(context.temporal || {});
+        const cognitive_influence = this.assess_cognitive_context(context.cognitive || {});
+
+        const total_influence = (
+            physical_influence.weight +
+            social_influence.weight +
+            temporal_influence.weight +
+            cognitive_influence.weight
+        ) / 4;
+
+        return {
+            physical: physical_influence,
+            social: social_influence,
+            temporal: temporal_influence,
+            cognitive: cognitive_influence,
+            total_influence: total_influence,
+            dominant_factor: this.identify_dominant_factor({
+                physical: physical_influence.weight,
+                social: social_influence.weight,
+                temporal: temporal_influence.weight,
+                cognitive: cognitive_influence.weight
+            })
+        };
     }
 
     /**
@@ -228,34 +226,32 @@ class QuantumSimulators {
      * Apply middleware filtering for safety and relevance
      */
     apply_middleware_filtering(query, environmental_context) {
-        return this.webppl.infer(() => {
-            let filtered_query = { ...query };
-            const middleware_actions = [];
-            
-            // Safety screening
-            const safety_risk = this.assess_safety_risk(query, environmental_context);
-            if (safety_risk > this.middleware_filters.safety_screener.activation_threshold) {
-                filtered_query = this.apply_safety_filtering(filtered_query);
-                middleware_actions.push("safety_filtering_applied");
-            }
-            
-            // Relevance filtering
-            const relevance_score = this.assess_relevance(query, environmental_context);
-            if (relevance_score < this.middleware_filters.relevance_filter.activation_threshold) {
-                filtered_query = this.apply_relevance_boosting(filtered_query);
-                middleware_actions.push("relevance_boosting_applied");
-            }
-            
-            // Coherence validation
-            const coherence_score = this.assess_coherence(query);
-            if (coherence_score < this.middleware_filters.coherence_validator.activation_threshold) {
-                filtered_query = this.apply_coherence_enhancement(filtered_query);
-                middleware_actions.push("coherence_enhancement_applied");
-            }
-            
-            this.middleware_actions = middleware_actions;
-            return filtered_query;
-        });
+        let filtered_query = { ...query };
+        const middleware_actions = [];
+
+        // Safety screening
+        const safety_risk = this.assess_safety_risk(query, environmental_context);
+        if (safety_risk > this.middleware_filters.safety_screener.activation_threshold) {
+            filtered_query = this.apply_safety_filtering(filtered_query);
+            middleware_actions.push("safety_filtering_applied");
+        }
+
+        // Relevance filtering
+        const relevance_score = this.assess_relevance(query, environmental_context);
+        if (relevance_score < this.middleware_filters.relevance_filter.activation_threshold) {
+            filtered_query = this.apply_relevance_boosting(filtered_query);
+            middleware_actions.push("relevance_boosting_applied");
+        }
+
+        // Coherence validation
+        const coherence_score = this.assess_coherence(query);
+        if (coherence_score < this.middleware_filters.coherence_validator.activation_threshold) {
+            filtered_query = this.apply_coherence_enhancement(filtered_query);
+            middleware_actions.push("coherence_enhancement_applied");
+        }
+
+        this.middleware_actions = middleware_actions;
+        return filtered_query;
     }
 
     /**
@@ -263,139 +259,129 @@ class QuantumSimulators {
      */
     run_individual_simulator(sim_type, query, environmental_context) {
         const config = this.simulator_types[sim_type];
-        
-        return this.webppl.infer(() => {
-            // Apply environmental modulation
-            const environmental_modifier = this.calculate_environmental_modifier(sim_type, environmental_context);
-            
-            // Process with simulator-specific logic
-            let output;
-            switch (sim_type) {
-                case "reality_processor":
-                    output = this.process_reality(query, environmental_context, environmental_modifier);
-                    break;
-                case "memory_reconstructor":
-                    output = this.process_memory(query, environmental_context, environmental_modifier);
-                    break;
-                case "prediction_engine":
-                    output = this.process_prediction(query, environmental_context, environmental_modifier);
-                    break;
-                case "pattern_explorer":
-                    output = this.process_patterns(query, environmental_context, environmental_modifier);
-                    break;
-                default:
-                    output = this.process_generic(query, environmental_context, environmental_modifier);
-            }
-            
-            // Add noise based on simulator tolerance
-            const noise_level = config.noise_tolerance * environmental_modifier.noise_amplification;
-            const noisy_output = this.add_processing_noise(output, noise_level);
-            
-            return {
-                core_output: output,
-                noisy_output: noisy_output,
-                environmental_modifier: environmental_modifier,
-                processing_confidence: this.webppl.beta(8, 2), // Generally confident
-                energy_consumed: config.energy_cost * environmental_modifier.energy_multiplier,
-                processing_time: this.webppl.exponential(1 / config.processing_depth)
-            };
-        });
+
+        // Apply environmental modulation
+        const environmental_modifier = this.calculate_environmental_modifier(sim_type, environmental_context);
+
+        // Process with simulator-specific logic
+        let output;
+        switch (sim_type) {
+            case "reality_processor":
+                output = this.process_reality(query, environmental_context, environmental_modifier);
+                break;
+            case "memory_reconstructor":
+                output = this.process_memory(query, environmental_context, environmental_modifier);
+                break;
+            case "prediction_engine":
+                output = this.process_prediction(query, environmental_context, environmental_modifier);
+                break;
+            case "pattern_explorer":
+                output = this.process_patterns(query, environmental_context, environmental_modifier);
+                break;
+            default:
+                output = this.process_generic(query, environmental_context, environmental_modifier);
+        }
+
+        // Add noise based on simulator tolerance
+        const noise_level = config.noise_tolerance * environmental_modifier.noise_amplification;
+        const noisy_output = this.add_processing_noise(output, noise_level);
+
+        return {
+            core_output: output,
+            noisy_output: noisy_output,
+            environmental_modifier: environmental_modifier,
+            processing_confidence: this.webppl.beta(8, 2), // Generally confident
+            energy_consumed: config.energy_cost * environmental_modifier.energy_multiplier,
+            processing_time: this.webppl.exponential(1 / config.processing_depth)
+        };
     }
 
     /**
      * Reality processor - current environment analysis
      */
     process_reality(query, environmental_context, modifier) {
-        return this.webppl.infer(() => {
-            const reality_assessment = {
-                current_state: this.assess_current_state(query, environmental_context),
-                external_stimuli: this.process_external_stimuli(environmental_context),
-                immediate_context: this.process_immediate_context(query),
-                reality_coherence: this.webppl.beta(9, 1) // Reality processor is usually very confident
-            };
-            
-            // Apply environmental modulation
-            if (environmental_context.physical?.lighting === "low") {
-                reality_assessment.visual_confidence = this.webppl.beta(3, 7);
-            }
-            if (environmental_context.social?.people_present > 0) {
-                reality_assessment.social_awareness = this.webppl.beta(7, 3);
-            }
-            
-            return reality_assessment;
-        });
+        const reality_assessment = {
+            current_state: this.assess_current_state(query, environmental_context),
+            external_stimuli: this.process_external_stimuli(environmental_context),
+            immediate_context: this.process_immediate_context(query),
+            reality_coherence: this.webppl.beta(9, 1) // Reality processor is usually very confident
+        };
+
+        // Apply environmental modulation
+        if (environmental_context.physical?.lighting === "low") {
+            reality_assessment.visual_confidence = this.webppl.beta(3, 7);
+        }
+        if (environmental_context.social?.people_present > 0) {
+            reality_assessment.social_awareness = this.webppl.beta(7, 3);
+        }
+
+        return reality_assessment;
     }
 
     /**
      * Memory reconstructor - past experience integration
      */
     process_memory(query, environmental_context, modifier) {
-        return this.webppl.infer(() => {
-            const memory_reconstruction = {
-                relevant_memories: this.find_relevant_memories(query, environmental_context),
-                associative_links: this.find_associative_links(query),
-                temporal_context: this.assess_temporal_context(environmental_context.temporal || {}),
-                reconstruction_confidence: this.webppl.beta(6, 4) // Moderate confidence in memory
-            };
-            
-            // Environmental influence on memory
-            if (environmental_context.physical?.temperature === "extreme") {
-                memory_reconstruction.stress_memories_activated = true;
-            }
-            if (environmental_context.social?.cultural_norms) {
-                memory_reconstruction.cultural_filtering = this.webppl.beta(7, 3);
-            }
-            
-            return memory_reconstruction;
-        });
+        const memory_reconstruction = {
+            relevant_memories: this.find_relevant_memories(query, environmental_context),
+            associative_links: this.find_associative_links(query),
+            temporal_context: environmental_context.temporal || {},
+            reconstruction_confidence: this.webppl.beta(6, 4) // Moderate confidence in memory
+        };
+
+        // Environmental influence on memory
+        if (environmental_context.physical?.temperature === "extreme") {
+            memory_reconstruction.stress_memories_activated = true;
+        }
+        if (environmental_context.social?.cultural_norms) {
+            memory_reconstruction.cultural_filtering = this.webppl.beta(7, 3);
+        }
+
+        return memory_reconstruction;
     }
 
     /**
      * Prediction engine - future possibility modeling
      */
     process_prediction(query, environmental_context, modifier) {
-        return this.webppl.infer(() => {
-            const prediction_analysis = {
-                short_term_predictions: this.generate_short_term_predictions(query, environmental_context),
-                long_term_projections: this.generate_long_term_projections(query),
-                uncertainty_assessment: this.assess_prediction_uncertainty(environmental_context),
-                prediction_confidence: this.webppl.beta(5, 5) // Moderate confidence in predictions
-            };
-            
-            // Environmental impact on predictions
-            if (environmental_context.temporal?.deadline_pressure > 0.7) {
-                prediction_analysis.urgency_bias = this.webppl.beta(8, 2);
-            }
-            if (environmental_context.cognitive?.mental_energy < 0.3) {
-                prediction_analysis.conservative_bias = this.webppl.beta(7, 3);
-            }
-            
-            return prediction_analysis;
-        });
+        const prediction_analysis = {
+            short_term_predictions: this.generate_short_term_predictions(query, environmental_context),
+            long_term_projections: this.generate_long_term_projections(query),
+            uncertainty_assessment: this.assess_prediction_uncertainty(environmental_context),
+            prediction_confidence: this.webppl.beta(5, 5) // Moderate confidence in predictions
+        };
+
+        // Environmental impact on predictions
+        if (environmental_context.temporal?.deadline_pressure > 0.7) {
+            prediction_analysis.urgency_bias = this.webppl.beta(8, 2);
+        }
+        if (environmental_context.cognitive?.mental_energy < 0.3) {
+            prediction_analysis.conservative_bias = this.webppl.beta(7, 3);
+        }
+
+        return prediction_analysis;
     }
 
     /**
      * Pattern explorer - creative pattern discovery
      */
     process_patterns(query, environmental_context, modifier) {
-        return this.webppl.infer(() => {
-            const pattern_exploration = {
-                novel_connections: this.discover_novel_connections(query, environmental_context),
-                creative_analogies: this.generate_creative_analogies(query),
-                pattern_confidence: this.webppl.beta(4, 6), // Lower confidence, higher creativity
-                surprise_factor: this.webppl.exponential(2) // Potential for surprising insights
-            };
-            
-            // Environmental creativity modulation
-            if (environmental_context.physical?.space === "open") {
-                pattern_exploration.spatial_creativity_boost = this.webppl.beta(8, 2);
-            }
-            if (environmental_context.cognitive?.motivation > 0.8) {
-                pattern_exploration.motivated_creativity = this.webppl.beta(9, 1);
-            }
-            
-            return pattern_exploration;
-        });
+        const pattern_exploration = {
+            novel_connections: this.discover_novel_connections(query, environmental_context),
+            creative_analogies: this.generate_creative_analogies(query),
+            pattern_confidence: this.webppl.beta(4, 6), // Lower confidence, higher creativity
+            surprise_factor: this.webppl.exponential(2) // Potential for surprising insights
+        };
+
+        // Environmental creativity modulation
+        if (environmental_context.physical?.space === "open") {
+            pattern_exploration.spatial_creativity_boost = this.webppl.beta(8, 2);
+        }
+        if (environmental_context.cognitive?.motivation > 0.8) {
+            pattern_exploration.motivated_creativity = this.webppl.beta(9, 1);
+        }
+
+        return pattern_exploration;
     }
 
     /**
@@ -405,43 +391,41 @@ class QuantumSimulators {
         if (Object.keys(simulator_outputs).length < 2) {
             return simulator_outputs; // No cross-talk possible with single simulator
         }
-        
-        return this.webppl.infer(() => {
-            const cross_talked = { ...simulator_outputs };
-            
-            // Reality-Memory cross-talk
-            if (cross_talked.reality_processor && cross_talked.memory_reconstructor) {
-                const reality_memory_resonance = this.webppl.beta(
-                    this.cross_talk_matrix.reality_to_memory * 10, 
-                    (1 - this.cross_talk_matrix.reality_to_memory) * 10
-                );
-                cross_talked.reality_processor.memory_validated = reality_memory_resonance > 0.5;
-                cross_talked.memory_reconstructor.reality_anchored = reality_memory_resonance > 0.5;
-            }
-            
-            // Memory-Prediction cross-talk
-            if (cross_talked.memory_reconstructor && cross_talked.prediction_engine) {
-                const memory_prediction_synergy = this.webppl.beta(
-                    this.cross_talk_matrix.memory_to_prediction * 10,
-                    (1 - this.cross_talk_matrix.memory_to_prediction) * 10
-                );
-                cross_talked.prediction_engine.historical_informed = memory_prediction_synergy > 0.6;
-                cross_talked.memory_reconstructor.future_relevant = memory_prediction_synergy > 0.6;
-            }
-            
-            // Prediction-Pattern cross-talk (highest synergy)
-            if (cross_talked.prediction_engine && cross_talked.pattern_explorer) {
-                const prediction_pattern_synergy = this.webppl.beta(
-                    this.cross_talk_matrix.prediction_to_pattern * 10,
-                    (1 - this.cross_talk_matrix.prediction_to_pattern) * 10
-                );
-                cross_talked.pattern_explorer.future_oriented = prediction_pattern_synergy > 0.7;
-                cross_talked.prediction_engine.creative_enhanced = prediction_pattern_synergy > 0.7;
-            }
-            
-            this.quantum_state.cross_talk_active = true;
-            return cross_talked;
-        });
+
+        const cross_talked = { ...simulator_outputs };
+
+        // Reality-Memory cross-talk
+        if (cross_talked.reality_processor && cross_talked.memory_reconstructor) {
+            const reality_memory_resonance = this.webppl.beta(
+                this.cross_talk_matrix.reality_to_memory * 10,
+                (1 - this.cross_talk_matrix.reality_to_memory) * 10
+            );
+            cross_talked.reality_processor.memory_validated = reality_memory_resonance > 0.5;
+            cross_talked.memory_reconstructor.reality_anchored = reality_memory_resonance > 0.5;
+        }
+
+        // Memory-Prediction cross-talk
+        if (cross_talked.memory_reconstructor && cross_talked.prediction_engine) {
+            const memory_prediction_synergy = this.webppl.beta(
+                this.cross_talk_matrix.memory_to_prediction * 10,
+                (1 - this.cross_talk_matrix.memory_to_prediction) * 10
+            );
+            cross_talked.prediction_engine.historical_informed = memory_prediction_synergy > 0.6;
+            cross_talked.memory_reconstructor.future_relevant = memory_prediction_synergy > 0.6;
+        }
+
+        // Prediction-Pattern cross-talk (highest synergy)
+        if (cross_talked.prediction_engine && cross_talked.pattern_explorer) {
+            const prediction_pattern_synergy = this.webppl.beta(
+                this.cross_talk_matrix.prediction_to_pattern * 10,
+                (1 - this.cross_talk_matrix.prediction_to_pattern) * 10
+            );
+            cross_talked.pattern_explorer.future_oriented = prediction_pattern_synergy > 0.7;
+            cross_talked.prediction_engine.creative_enhanced = prediction_pattern_synergy > 0.7;
+        }
+
+        this.quantum_state.cross_talk_active = true;
+        return cross_talked;
     }
 
     /**
@@ -449,6 +433,11 @@ class QuantumSimulators {
      */
     assess_physical_context(physical = {}) {
         return {
+            // القيم الخام تمرَّر كما هي ليقرأها بقية المسار (المحاكيات والمعدِّلات البيئية)
+            temperature: physical.temperature,
+            lighting: physical.lighting,
+            sound: physical.sound,
+            space: physical.space,
             temperature_influence: this.calculate_temperature_influence(physical.temperature),
             lighting_influence: this.calculate_lighting_influence(physical.lighting),
             sound_influence: this.calculate_sound_influence(physical.sound),
@@ -459,6 +448,9 @@ class QuantumSimulators {
 
     assess_social_context(social = {}) {
         return {
+            people_present: social.people_present || 0,
+            cultural_norms: social.cultural_norms,
+            power_dynamics: social.power_dynamics,
             people_influence: this.calculate_people_influence(social.people_present || 0),
             cultural_influence: this.calculate_cultural_influence(social.cultural_norms),
             power_influence: this.calculate_power_influence(social.power_dynamics),
@@ -468,6 +460,9 @@ class QuantumSimulators {
 
     assess_temporal_context(temporal = {}) {
         return {
+            time_of_day: temporal.time_of_day,
+            season: temporal.season,
+            deadline_pressure: temporal.deadline_pressure || 0,
             time_influence: this.calculate_time_influence(temporal.time_of_day),
             season_influence: this.calculate_season_influence(temporal.season),
             deadline_influence: this.calculate_deadline_influence(temporal.deadline_pressure || 0),
@@ -477,9 +472,12 @@ class QuantumSimulators {
 
     assess_cognitive_context(cognitive = {}) {
         return {
-            energy_influence: this.calculate_energy_influence(cognitive.mental_energy || 0.5),
-            attention_influence: this.calculate_attention_influence(cognitive.attention_level || 0.5),
-            motivation_influence: this.calculate_motivation_influence(cognitive.motivation || 0.5),
+            mental_energy: cognitive.mental_energy ?? 0.5,
+            attention_level: cognitive.attention_level ?? 0.5,
+            motivation: cognitive.motivation ?? 0.5,
+            energy_influence: this.calculate_energy_influence(cognitive.mental_energy ?? 0.5),
+            attention_influence: this.calculate_attention_influence(cognitive.attention_level ?? 0.5),
+            motivation_influence: this.calculate_motivation_influence(cognitive.motivation ?? 0.5),
             weight: this.webppl.beta(8, 2) // Cognitive context very important
         };
     }
@@ -521,22 +519,24 @@ class QuantumSimulators {
      */
     add_processing_noise(output, noise_level) {
         if (noise_level < 0.1) return output; // No significant noise
-        
-        return this.webppl.infer(() => {
-            const noise_factor = this.webppl.exponential(1 / noise_level);
-            
-            // Add noise to confidence levels
+
+        const noisy_output = { ...output };
+
+        // نشوّش حقول الثقة/التماسك الرقمية الموجودة فعلاً على المخرَج
+        // (reality_coherence, reconstruction_confidence, prediction_confidence, pattern_confidence, ...)
+        const confidence_keys = Object.keys(noisy_output).filter(key =>
+            typeof noisy_output[key] === 'number' && /confidence|coherence/.test(key)
+        );
+
+        for (const key of confidence_keys) {
             const confidence_noise = this.webppl.gaussian(0, noise_level * 0.3);
-            
-            return {
-                ...output,
-                noise_adjusted_confidence: Math.max(0.1, Math.min(0.9, 
-                    (output.processing_confidence || 0.7) + confidence_noise
-                )),
-                noise_level_applied: noise_level,
-                creative_potential: noise_level > 0.3 ? this.webppl.beta(7, 3) : this.webppl.beta(3, 7)
-            };
-        });
+            noisy_output[key] = Math.max(0.1, Math.min(0.9, noisy_output[key] + confidence_noise));
+        }
+
+        noisy_output.noise_level_applied = noise_level;
+        noisy_output.creative_potential = noise_level > 0.3 ? this.webppl.beta(7, 3) : this.webppl.beta(3, 7);
+
+        return noisy_output;
     }
 
     /**
@@ -559,6 +559,67 @@ class QuantumSimulators {
         return influences[light] || 0.5;
     }
 
+    calculate_sound_influence(sound) {
+        if (!sound) return 0.5;
+        const influences = {
+            "silent": 0.7, "quiet": 0.8, "ambient": 0.7, "moderate": 0.6,
+            "noisy": 0.4, "loud": 0.3, "deafening": 0.1
+        };
+        return influences[sound] || 0.5;
+    }
+
+    calculate_space_influence(space) {
+        if (!space) return 0.5;
+        const influences = {
+            "cramped": 0.3, "confined": 0.4, "moderate": 0.6,
+            "open": 0.8, "vast": 0.7, "familiar": 0.8
+        };
+        return influences[space] || 0.5;
+    }
+
+    calculate_cultural_influence(norms) {
+        if (norms === undefined || norms === null) return 0.5;
+        if (typeof norms === "number") return Math.max(0, Math.min(1, norms));
+        const influences = {
+            "familiar": 0.8, "supportive": 0.9, "neutral": 0.5,
+            "unfamiliar": 0.4, "restrictive": 0.3, "hostile": 0.2
+        };
+        // مجرد وجود أعراف ثقافية مسماة يعني تأثيراً ملموساً
+        return influences[norms] || 0.6;
+    }
+
+    calculate_power_influence(power_dynamics) {
+        if (!power_dynamics) return 0.5;
+        const influences = {
+            "equal": 0.8, "supportive": 0.9, "hierarchical": 0.5,
+            "dominant": 0.4, "submissive": 0.4, "competitive": 0.3, "abusive": 0.1
+        };
+        return influences[power_dynamics] || 0.5;
+    }
+
+    calculate_time_influence(time_of_day) {
+        if (!time_of_day) return 0.5;
+        const influences = {
+            "early_morning": 0.6, "morning": 0.8, "midday": 0.7, "afternoon": 0.6,
+            "evening": 0.5, "twilight": 0.5, "night": 0.3, "late_night": 0.2
+        };
+        return influences[time_of_day] || 0.5;
+    }
+
+    calculate_season_influence(season) {
+        if (!season) return 0.5;
+        const influences = {
+            "spring": 0.8, "summer": 0.7, "autumn": 0.6, "fall": 0.6, "winter": 0.4
+        };
+        return influences[season] || 0.5;
+    }
+
+    calculate_deadline_influence(pressure) {
+        // منحنى Yerkes-Dodson: ضغط معتدل ينشّط الأداء، والضغط الشديد يخنقه
+        const p = Math.max(0, Math.min(1, pressure || 0));
+        return Math.max(0.1, Math.min(1.0, 1 - Math.abs(p - 0.4) * 1.5));
+    }
+
     calculate_people_influence(count) {
         if (count === 0) return 0.8; // Alone - good for some tasks
         if (count <= 2) return 0.9;  // Small group - optimal
@@ -568,6 +629,17 @@ class QuantumSimulators {
 
     calculate_energy_influence(energy) {
         return Math.max(0.1, energy); // Energy directly influences processing capacity
+    }
+
+    calculate_attention_influence(attention) {
+        const a = Math.max(0, Math.min(1, attention ?? 0.5));
+        // تحت عتبة 0.3 تنهار جودة المعالجة أسرع من الانخفاض الخطي
+        return Math.max(0.05, a < 0.3 ? a * 0.5 : a);
+    }
+
+    calculate_motivation_influence(motivation) {
+        const m = Math.max(0, Math.min(1, motivation ?? 0.5));
+        return 0.3 + m * 0.7; // حتى بلا دافعية تبقى معالجة قاعدية دنيا
     }
 
     /**
@@ -591,9 +663,10 @@ class QuantumSimulators {
     }
 
     identify_dominant_factor(factors) {
-        return Object.entries(factors).reduce((a, b) => 
-            factors[a] > factors[b[0]] ? a : b[0]
-        );
+        return Object.entries(factors).reduce(
+            (dominant, [factor, value]) => (value > dominant.value ? { factor, value } : dominant),
+            { factor: null, value: -Infinity }
+        ).factor;
     }
 
     get_middleware_actions() {

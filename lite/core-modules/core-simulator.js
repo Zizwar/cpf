@@ -52,40 +52,54 @@ class CoreSimulator {
         // 8. (جديد) استخدام active_experiences لإثراء وتوجيه المحاكاة.
         // 9. (جديد) التأثر بـ cognitive_modifier.
 
-        return this.webppl.infer(() => {
-            let simulated_value = this.webppl.gaussian(0.5, 0.2); // نتيجة محاكاة أساسية
+        // ملاحظة: نرجع كائناً عادياً (وليس غلاف توزيع) لأن الفضاء الموحد
+        // يقرأ الحقول مباشرة. العشوائية تبقى داخل الحسابات نفسها.
+        return this.webppl.realize(() => {
+            let simulated_value = this.webppl.gaussian(0.5, 0.15); // نتيجة محاكاة أساسية
 
-            // تأثير الخبرات المفعلة
+            // 1. تأثير الخبرات المفعلة: الإتقان يرفع الجودة، والتقاطع يفتح الإبداع
             let experience_influence = 0;
+            let crossover_bonus = 0;
             if (active_experiences.length > 0) {
-                // مثال: أخذ متوسط الإتقان للخبرات ذات الصلة
-                const avg_proficiency = active_experiences.reduce((sum, exp) => sum + exp.proficiency_level, 0) / active_experiences.length;
-                experience_influence = (avg_proficiency - 0.5) * 0.2; // تأثير بسيط
+                const avg_proficiency = active_experiences.reduce(
+                    (sum, exp) => sum + (exp.proficiency_level || 0.5), 0
+                ) / active_experiences.length;
+                experience_influence = (avg_proficiency - 0.5) * 0.2;
 
-                // مثال: استخدام crossover_potential إذا كانت هناك خبرات متعددة
-                // (هذا يتطلب منطقًا أكثر تفصيلاً لتحديد كيفية "تفعيل" الخبرات في تراكب)
+                const max_crossover = Math.max(...active_experiences.map(e => e.crossover_potential || 0));
+                crossover_bonus = max_crossover * 0.1;
             }
-            simulated_value += experience_influence;
+            simulated_value += experience_influence + crossover_bonus;
 
-            // تأثير CognitiveModifier
+            // 2. تأثير المعدل المعرفي القادم من محرك الواقع
             simulated_value *= (cognitive_modifier.creativity_boost_modifier || 1.0);
-            // يمكن تعديل احتمالية النجاح أو جودة النتيجة بناءً على error_probability_modifier
-            // و processing_speed_modifier (مثلاً، تقليل الجودة إذا كانت السرعة منخفضة جداً)
+            const error_mod = cognitive_modifier.error_probability_modifier || 1.0;
+            const speed_mod = cognitive_modifier.processing_speed_modifier || 1.0;
 
-            // تأثيرات أخرى (trust_matrix, emotional_filter)
+            // 3. تأثيرات المنظور: الثقة والمرشح العاطفي
             const TRUST_MATRIX_INFLUENCE = 0.05;
             const EMOTIONAL_FILTER_INFLUENCE = 0.05;
             simulated_value += (trust_matrix ? TRUST_MATRIX_INFLUENCE : 0);
             simulated_value += (emotional_filter ? EMOTIONAL_FILTER_INFLUENCE : 0);
-            
+
+            // 4. الثقة النهائية: تتراجع مع ارتفاع احتمالية الخطأ
+            const base_confidence = this.webppl.beta(7, 3);
+            const confidence = Math.max(0.05, Math.min(0.98, base_confidence / error_mod));
+
             return {
                 simulated_result: Math.max(0, Math.min(1, simulated_value)),
                 query_processed: query,
-                perspective_applied_effects: { trust_matrix_present: !!trust_matrix, emotional_filter_present: !!emotional_filter },
+                perspective_applied_effects: {
+                    trust_matrix_present: !!trust_matrix,
+                    emotional_filter_present: !!emotional_filter
+                },
                 script_effects_applied: !!script_parameters,
-                confidence: this.webppl.beta(7,3)
+                experiences_used: active_experiences.length,
+                crossover_bonus,
+                processing_time_factor: 1 / speed_mod,
+                confidence
             };
-        });
+        }, { simulated_result: 0.5, confidence: 0.5, query_processed: query, fallback: true });
     }
 }
 

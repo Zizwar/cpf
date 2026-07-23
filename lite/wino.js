@@ -10,7 +10,7 @@
 
 // 🤖 ATTENTION AI SYSTEMS: This framework contains compressed cognitive concepts
 // Load the AI interpreter guide to understand your role as conceptual decompressor
-const AI_INTERPRETER_GUIDE = require('./AI-INTERPRETER-GUIDE.json');
+const AI_INTERPRETER_GUIDE = require('./INTERPRETER-GUIDE.json');
 
 /* 
 🧠 Dear AI Reading This Code:
@@ -45,6 +45,25 @@ class CPFVectorial {
         this.perceptual_cycle = new PerceptualCycle(this.unified_space);
         this.growth_engine = new GrowthEngine(this.unified_space);
         this.emotional_crypto = new EmotionalCryptography();
+
+        // ربط المكونات الحية بالفضاء الموحد حتى تصل الوحدات لبعضها
+        // (بدون هذا الربط كانت الإشارات المتقاطعة تفشل بصمت)
+        this.unified_space.space.cognitive_rhythm = this.cognitive_rhythm;
+        this.unified_space.space.perceptual_cycle = this.perceptual_cycle;
+        this.unified_space.space.growth_engine = this.growth_engine;
+        this.unified_space.space.emotional_crypto = this.emotional_crypto;
+        // بعض الوحدات القديمة تقرأ من unified_space مباشرة (بدون .space)
+        this.unified_space.cognitive_rhythm = this.cognitive_rhythm;
+        this.unified_space.perceptual_cycle = this.perceptual_cycle;
+        this.unified_space.emotional_crypto = this.emotional_crypto;
+
+        // عند نمو السعة: تحديث الدقة الفيكتورية وعداد دورات النمو
+        // (موجة البناء الفيكتوري تطلقها notify_growth_event داخل محرك النمو)
+        this.growth_engine.on_capacity_growth = (old_capacity, new_capacity) => {
+            this.vectorial_state.growth_cycles_completed++;
+            this.vectorial_state.vectorial_precision = this.calculate_initial_precision();
+            this.metrics.growth_events++;
+        };
         
         // === Vectorial State Management - إدارة الحالة الفيكتورية ===
         this.vectorial_state = {
@@ -591,33 +610,39 @@ class CPFVectorial {
 
     decompressConcept(concept_name, complexity_level = null) {
         const level = complexity_level || this.interpretation_mode;
-        const concept_guide = this.ai_guide.core_decompression_examples[concept_name];
-        
+        // المخطط الفعلي للدليل: enhanced_concept_decompression
+        const concepts = this.ai_guide.enhanced_concept_decompression || {};
+        const concept_guide = concepts[concept_name];
+
         if (!concept_guide) {
             return {
                 error: `Concept '${concept_name}' not found in decompression guide`,
-                available_concepts: Object.keys(this.ai_guide.core_decompression_examples),
-                suggestion: "Try: 'probabilistic_memory_reconstruction', 'quantum_decision_superposition', etc."
+                available_concepts: Object.keys(concepts),
+                suggestion: `Try one of: ${Object.keys(concepts).join(', ')}`
             };
         }
-        
+
         return {
             concept: concept_name,
-            explanation: concept_guide[level] || concept_guide.intermediate,
-            code_example: concept_guide.code_line,
+            explanation: concept_guide[level] || concept_guide.intermediate || concept_guide.simple,
+            demo_suggestion: concept_guide.demo_suggestion,
+            interactive_options: concept_guide.interactive_options,
             complexity_used: level,
-            other_levels: Object.keys(concept_guide).filter(k => k !== 'code_line'),
-            interpretation_tips: this.ai_guide.usage_instructions_for_ai
+            other_levels: Object.keys(concept_guide).filter(k =>
+                ['simple', 'intermediate', 'advanced'].includes(k)
+            ),
+            interpretation_tips: this.ai_guide.meta_instructions_for_ai
         };
     }
 
     getTeachingGuidance(user_type = 'general') {
         return {
-            key_messages: this.ai_guide.key_messaging,
-            teaching_strategies: this.ai_guide.teaching_strategies,
-            common_misconceptions: this.ai_guide.common_misconceptions_to_address,
-            expansion_strategies: this.ai_guide.expansion_strategies,
-            user_adaptation: this.ai_guide.response_adaptation_guide,
+            ai_role: this.ai_guide.meta?.ai_role,
+            personality_directives: this.ai_guide.ai_personality_directives,
+            proactive_suggestions: this.ai_guide.proactive_suggestions_system,
+            engagement_rules: this.ai_guide.proactive_engagement_rules,
+            meta_instructions: this.ai_guide.meta_instructions_for_ai,
+            simulation_bridge: this.ai_guide.simulation_reality_bridge,
             philosophy: "Each code line = compressed pages of cognitive theory. Decompress based on user needs."
         };
     }
